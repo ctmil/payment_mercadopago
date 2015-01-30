@@ -21,11 +21,13 @@ class MercadoPagoController(http.Controller):
     _cancel_url = '/payment/mercadopago/cancel/'
 
     def _get_return_url(self, **post):
-        """ Extract the return URL from the data coming from mercadopago. """
-        return_url = post.pop('return_url', '')
-        if not return_url:
-            custom = json.loads(post.pop('custom', False) or '{}')
-            return_url = custom.get('return_url', '/')
+        """ Extract the return URL from the data coming from MercadoPago. """
+
+#        return_url = post.pop('return_url', '')
+#        if not return_url:
+#            custom = json.loads(post.pop('custom', False) or '{}')
+#            return_url = custom.get('return_url', '/')
+        return_url = ''
         return return_url
 
     def mercadopago_validate_data(self, **post):
@@ -39,36 +41,51 @@ class MercadoPagoController(http.Controller):
 
         Once data is validated, process it. """
         res = False
-        new_post = dict(post, cmd='_notify-validate')
+        #new_post = dict(post, cmd='_notify-validate')
+
         cr, uid, context = request.cr, request.uid, request.context
-        reference = post.get('item_number')
+        reference = post.get('external_reference')
         tx = None
         if reference:
             tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', reference)], context=context)
             if tx_ids:
                 tx = request.registry['payment.transaction'].browse(cr, uid, tx_ids[0], context=context)
-        mercadopago_urls = request.registry['payment.acquirer']._get_mercadopago_urls(cr, uid, tx and tx.acquirer_id and tx.acquirer_id.env or 'prod', context=context)
-        validate_url = mercadopago_urls['mercadopago_form_url']
-        urequest = urllib2.Request(validate_url, werkzeug.url_encode(new_post))
-        uopen = urllib2.urlopen(urequest)
-        resp = uopen.read()
-        if resp == 'VERIFIED':
-            _logger.info('MercadoPago: validated data')
-            res = request.registry['payment.transaction'].form_feedback(cr, SUPERUSER_ID, post, 'mercadopago', context=context)
-        elif resp == 'INVALID':
-            _logger.warning('MercadoPago: answered INVALID on data verification')
-        else:
-            _logger.warning('MercadoPago: unrecognized mercadopago answer, received %s instead of VERIFIED or INVALID' % resp.text)
+#                _logger.info('payment.transaction: %s' % tx)
+
+
+        print "mercadopago_validate_data()"
+        _logger.info('MercadoPago: validating data')
+        #print "new_post:", new_post
+        _logger.info('MercadoPago: %s' % post)
+
+#        https://api.mercadolibre.com/collections/?access_token=
+#        if :
+
+#        mercadopago_urls = request.registry['payment.acquirer']._get_mercadopago_urls(cr, uid, tx and tx.acquirer_id and tx.acquirer_id.env or 'prod', context=context)
+#        validate_url = mercadopago_urls['mercadopago_form_url']
+#        urequest = urllib2.Request(validate_url, werkzeug.url_encode(new_post))
+#        uopen = urllib2.urlopen(urequest)
+#        resp = uopen.read()
+#        if resp == 'VERIFIED':
+#            _logger.info('MercadoPago: validated data')
+#            res = request.registry['payment.transaction'].form_feedback(cr, SUPERUSER_ID, post, 'mercadopago', context=context)
+#        elif resp == 'INVALID':
+#            _logger.warning('MercadoPago: answered INVALID on data verification')
+#        else:
+#            _logger.warning('MercadoPago: unrecognized mercadopago answer, received %s instead of VERIFIED or INVALID' % resp.text)
         return res
 
     @http.route('/payment/mercadopago/ipn/', type='http', auth='none', methods=['POST'])
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
+        # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
+        #segun el topic:
+        # luego se consulta con el "id"
         _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
         self.mercadopago_validate_data(**post)
         return ''
 
-    @http.route('/payment/mercadopago/dpn', type='http', auth="none", methods=['POST'])
+    @http.route('/payment/mercadopago/dpn', type='http', auth="none")
     def mercadopago_dpn(self, **post):
         """ MercadoPago DPN """
         _logger.info('Beginning MercadoPago DPN form_feedback with post data %s', pprint.pformat(post))  # debug

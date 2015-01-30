@@ -31,13 +31,14 @@ class AcquirerMercadopago(osv.Model):
                 #https://www.mercadopago.com/mla/checkout/pay?pref_id=153438434-6eb25e49-1bb8-4553-95b2-36033be216ad
                 #'mercadopago_form_url': 'https://www.paypal.com/cgi-bin/webscr',
                 'mercadopago_form_url': 'https://www.mercadopago.com/mla/checkout/pay',
-                'mercadopago_rest_url': 'https://api.mercadolibre.com/v1/oauth2/token',
+                'mercadopago_rest_url': 'https://api.mercadolibre.com/oauth/token',
             }
         else:
             return {
                 #'mercadopago_form_url': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+                #https://api.mercadolibre.com/oauth/token
                 'mercadopago_form_url': 'https://sandbox.mercadopago.com/mla/checkout/pay',
-                'mercadopago_rest_url': 'https://api.sandbox.mercadolibre.com/v1/oauth2/token',
+                'mercadopago_rest_url': 'https://api.sandbox.mercadolibre.com/oauth/token',
             }
 
     def _get_providers(self, cr, uid, context=None):
