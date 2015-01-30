@@ -81,9 +81,14 @@ class AcquirerMercadopago(osv.Model):
 
     def _migrate_mercadopago_account(self, cr, uid, context=None):
         """ COMPLETE ME """
-        cr.execute('SELECT id, mercadopago_account FROM res_company')
-        res = cr.fetchall()
-        for (company_id, company_mercadopago_account) in res:
+
+        #cr.execute('SELECT id, mercadopago_account FROM res_company')
+        #res = cr.fetchall()
+        company_ids = self.pool.get( "res.company" ).search(cr,uid,[])
+        for company in self.pool.get('res.company').browse(cr,uid,company_ids):
+            company_id = company.id
+            company_mercadopago_account = company.mercadopago_account
+        #for (company_id, company_mercadopago_account) in res:
             if company_mercadopago_account:
                 company_mercadopago_ids = self.search(cr, uid, [('company_id', '=', company_id), ('provider', '=', 'mercadopago')], limit=1, context=context)
                 if company_mercadopago_ids:
@@ -128,11 +133,16 @@ class AcquirerMercadopago(osv.Model):
         print "partner_values:", partner_values
 
         MPago = False
+        MPagoPrefId = False
 
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
             print "MPago: ", MPago
-        
+        else:
+            error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
+            _logger.error(error_msg)
+            raise ValidationError(error_msg)
+
         jsondump = ""
     
         if MPago:
@@ -218,14 +228,22 @@ class AcquirerMercadopago(osv.Model):
             preferenceResult = MPago.create_preference(preference)
         
             print "preferenceResult: ", preferenceResult
-
-            MPagoPrefId = preferenceResult['response']['id']
+            if 'response' in preferenceResult:
+                if 'id' in preferenceResult['response']:
+                    MPagoPrefId = preferenceResult['response']['id']
+            else:
+                error_msg = 'Returning response is:'
+                error_msg+= json.dumps(preferenceResult, indent=2)
+                _logger.error(error_msg)
+                raise ValidationError(error_msg)
+                
+            
             if acquirer.environment=="prod":
                 linkpay = preferenceResult['response']['init_point']
             else:
                 linkpay = preferenceResult['response']['sandbox_init_point']
 
-            jsondump = json.dumps( preferenceResult, indent=4 )
+            jsondump = json.dumps( preferenceResult, indent=2 )
 
             print "linkpay:", linkpay
             print "jsondump:", jsondump
@@ -234,7 +252,8 @@ class AcquirerMercadopago(osv.Model):
             
 
         mercadopago_tx_values = dict(tx_values)
-        mercadopago_tx_values.update({
+        if MPagoPrefId:
+            mercadopago_tx_values.update({
             'pref_id': MPagoPrefId,
 #            'cmd': '_xclick',
 #            'business': acquirer.mercadopago_email_account,
@@ -253,7 +272,8 @@ class AcquirerMercadopago(osv.Model):
 #            'return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._return_url),
 #            'notify_url': '%s' % urlparse.urljoin(base_url, MercadoPagoController._notify_url),
 #            'cancel_return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._cancel_url),
-        })
+            })
+
 #        if acquirer.fees_active:
 #            mercadopago_tx_values['handling'] = '%.2f' % mercadopago_tx_values.pop('fees', 0.0)
 #        if mercadopago_tx_values.get('return_url'):
