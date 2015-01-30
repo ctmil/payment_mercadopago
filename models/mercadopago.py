@@ -28,13 +28,16 @@ class AcquirerMercadopago(osv.Model):
         """ MercadoPago URLS """
         if environment == 'prod':
             return {
-                'mercadopago_form_url': 'https://www.paypal.com/cgi-bin/webscr',
-                'mercadopago_rest_url': 'https://api.paypal.com/v1/oauth2/token',
+                #https://www.mercadopago.com/mla/checkout/pay?pref_id=153438434-6eb25e49-1bb8-4553-95b2-36033be216ad
+                #'mercadopago_form_url': 'https://www.paypal.com/cgi-bin/webscr',
+                'mercadopago_form_url': 'https://www.mercadopago.com/mla/checkout/pay',
+                'mercadopago_rest_url': 'https://api.mercadolibre.com/v1/oauth2/token',
             }
         else:
             return {
-                'mercadopago_form_url': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
-                'mercadopago_rest_url': 'https://api.sandbox.paypal.com/v1/oauth2/token',
+                #'mercadopago_form_url': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
+                'mercadopago_form_url': 'https://sandbox.mercadopago.com/mla/checkout/pay',
+                'mercadopago_rest_url': 'https://api.sandbox.mercadolibre.com/v1/oauth2/token',
             }
 
     def _get_providers(self, cr, uid, context=None):
@@ -124,51 +127,143 @@ class AcquirerMercadopago(osv.Model):
         print "mercadopago_form_generate_values: tx_values: ", tx_values
         print "partner_values:", partner_values
 
+        MPago = False
+
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
             print "MPago: ", MPago
-
+        
+        jsondump = ""
+    
         if MPago:
+
+            if acquirer.environment=="prod":
+                MPago.sandbox_mode(False)
+            else:
+                MPago.sandbox_mode(True)
+
+            MPagoToken = MPago.get_access_token()
+
             preference = {
                 "items": [
                 {
-                    "title": "Test",
+                    "title": "Orden Ecommerce "+ tx_values["reference"] ,
+                    #"picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
                     "quantity": 1,
-                    "currency_id": "USD",
-                    "unit_price": 10.4
+                    "currency_id":  tx_values['currency'] and tx_values['currency'].name or '',
+                    "unit_price": tx_values["amount"],
+                    #"category_id": "Categoría",
                 }
                 ]
+                ,
+                "payer": {
+		            "name": partner_values["name"],
+		            "surname": partner_values["first_name"],
+		            "email": partner_values["email"],
+#		            "date_created": "2015-01-29T11:51:49.570-04:00",
+#		            "phone": {
+#			            "area_code": "+5411",
+#			            "number": partner_values["phone"]
+#		            },
+#		            "identification": {
+#			            "type": "DNI",
+#			            "number": "12345678"
+#		            },
+#		            "address": {
+#			            "street_name": partner_values["address"],
+#			            "street_number": "",
+#			            "zip_code": partner_values["zip"]
+#		            } contni
+	            },
+	            "back_urls": {
+		            "success": '%s' % urlparse.urljoin( base_url, MercadoPagoController._return_url),
+		            "failure": '%s' % urlparse.urljoin( base_url, MercadoPagoController._cancel_url),
+		            "pending": '%s' % urlparse.urljoin( base_url, MercadoPagoController._return_url)
+	            },
+	            "auto_return": "approved",
+#	            "payment_methods": {
+#		            "excluded_payment_methods": [
+#			            {
+#				            "id": "amex"
+#			            }
+#		            ],
+#		            "excluded_payment_types": [
+#			            {
+#				            "id": "ticket"
+#			            }
+#		            ],
+#		            "installments": 24,
+#		            "default_payment_method_id": '',
+#		            "default_installments": '',
+#	            },
+#	            "shipments": {
+#		            "receiver_address":
+#		             {
+#			            "zip_code": "1430",
+#			            "street_number": 123,
+#			            "street_name": "Calle Trece",
+#			            "floor": 4,
+#			            "apartment": "C"
+#		            }
+#	            },
+	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
+	            "external_reference": tx_values["reference"],
+	            "expires": True,
+	            "expiration_date_from": "2015-01-29T11:51:49.570-04:00",
+	            "expiration_date_to": "2015-02-28T11:51:49.570-04:00"
                 }
+
+            print "preference:", preference
+
+            preferenceResult = MPago.create_preference(preference)
+        
+            print "preferenceResult: ", preferenceResult
+
+            MPagoPrefId = preferenceResult['response']['id']
+            if acquirer.environment=="prod":
+                linkpay = preferenceResult['response']['init_point']
+            else:
+                linkpay = preferenceResult['response']['sandbox_init_point']
+
+            jsondump = json.dumps( preferenceResult, indent=4 )
+
+            print "linkpay:", linkpay
+            print "jsondump:", jsondump
+            print "MPagoPrefId: ", MPagoPrefId
+            print "MPagoToken: ", MPagoToken
+            
 
         mercadopago_tx_values = dict(tx_values)
         mercadopago_tx_values.update({
-            'cmd': '_xclick',
-            'business': acquirer.mercadopago_email_account,
-            'item_name': tx_values['reference'],
-            'item_number': tx_values['reference'],
-            'amount': tx_values['amount'],
-            'currency_code': tx_values['currency'] and tx_values['currency'].name or '',
-            'address1': partner_values['address'],
-            'city': partner_values['city'],
-            'country': partner_values['country'] and partner_values['country'].name or '',
-            'state': partner_values['state'] and partner_values['state'].name or '',
-            'email': partner_values['email'],
-            'zip': partner_values['zip'],
-            'first_name': partner_values['first_name'],
-            'last_name': partner_values['last_name'],
-            'return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._return_url),
-            'notify_url': '%s' % urlparse.urljoin(base_url, MercadoPagoController._notify_url),
-            'cancel_return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._cancel_url),
+            'pref_id': MPagoPrefId,
+#            'cmd': '_xclick',
+#            'business': acquirer.mercadopago_email_account,
+#            'item_name': tx_values['reference'],
+#            'item_number': tx_values['reference'],
+#            'amount': tx_values['amount'],
+#            'currency_code': tx_values['currency'] and tx_values['currency'].name or '',
+#            'address1': partner_values['address'],
+#            'city': partner_values['city'],
+#            'country': partner_values['country'] and partner_values['country'].name or '',
+#            'state': partner_values['state'] and partner_values['state'].name or '',
+#            'email': partner_values['email'],
+#            'zip': partner_values['zip'],
+#            'first_name': partner_values['first_name'],
+#            'last_name': partner_values['last_name'],
+#            'return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._return_url),
+#            'notify_url': '%s' % urlparse.urljoin(base_url, MercadoPagoController._notify_url),
+#            'cancel_return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._cancel_url),
         })
-        if acquirer.fees_active:
-            mercadopago_tx_values['handling'] = '%.2f' % mercadopago_tx_values.pop('fees', 0.0)
-        if mercadopago_tx_values.get('return_url'):
-            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
+#        if acquirer.fees_active:
+#            mercadopago_tx_values['handling'] = '%.2f' % mercadopago_tx_values.pop('fees', 0.0)
+#        if mercadopago_tx_values.get('return_url'):
+#            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
         return partner_values, mercadopago_tx_values
 
     def mercadopago_get_form_action_url(self, cr, uid, id, context=None):
         acquirer = self.browse(cr, uid, id, context=context)
         mercadopago_urls = self._get_mercadopago_urls(cr, uid, acquirer.environment, context=context)['mercadopago_form_url']
+#        mercadopago_urls = mercadopago_urls + "?pref_id=" + 
         print "mercadopago_get_form_action_url: ", mercadopago_urls
         return mercadopago_urls
 
