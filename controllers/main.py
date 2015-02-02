@@ -43,6 +43,11 @@ class MercadoPagoController(http.Controller):
         res = False
         #new_post = dict(post, cmd='_notify-validate')
 
+#       topic = payment
+#       id = identificador-de-la-operación
+        topic = post.get('topic')
+        op_id = post.get('id')
+
         cr, uid, context = request.cr, request.uid, request.context
         reference = post.get('external_reference')
         tx = None
@@ -50,13 +55,17 @@ class MercadoPagoController(http.Controller):
             tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', reference)], context=context)
             if tx_ids:
                 tx = request.registry['payment.transaction'].browse(cr, uid, tx_ids[0], context=context)
-#                _logger.info('payment.transaction: %s' % tx)
+                _logger.info('mercadopago_validate_data() > payment.transaction: %s' % tx)
 
 
-        print "mercadopago_validate_data()"
         _logger.info('MercadoPago: validating data')
         #print "new_post:", new_post
         _logger.info('MercadoPago: %s' % post)
+
+
+        if tx:
+            _logger.info('MercadoPago: ')
+            res = request.registry['payment.transaction'].form_feedback( cr, SUPERUSER_ID, post, 'mercadopago', context=context)
 
 #        https://api.mercadolibre.com/collections/?access_token=
 #        if :
@@ -75,7 +84,7 @@ class MercadoPagoController(http.Controller):
 #            _logger.warning('MercadoPago: unrecognized mercadopago answer, received %s instead of VERIFIED or INVALID' % resp.text)
         return res
 
-    @http.route('/payment/mercadopago/ipn/', type='http', auth='none', methods=['POST'])
+    @http.route('/payment/mercadopago/ipn/', type='http', auth='none')
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
@@ -99,4 +108,8 @@ class MercadoPagoController(http.Controller):
         cr, uid, context = request.cr, SUPERUSER_ID, request.context
         _logger.info('Beginning MercadoPago cancel with post data %s', pprint.pformat(post))  # debug
         return_url = self._get_return_url(**post)
+        status = post.get('collection_status')
+        if status=='null':
+            post['collection_status'] = 'cancelled'
+        self.mercadopago_validate_data(**post)
         return werkzeug.utils.redirect(return_url)

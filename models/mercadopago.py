@@ -332,9 +332,10 @@ class TxMercadoPago(osv.Model):
     # --------------------------------------------------
 
     def _mercadopago_form_get_tx_from_data(self, cr, uid, data, context=None):
-        reference, txn_id = data.get('item_number'), data.get('txn_id')
-        if not reference or not txn_id:
-            error_msg = 'MercadoPago: received data with missing reference (%s) or txn_id (%s)' % (reference, txn_id)
+#        reference, txn_id = data.get('external_reference'), data.get('txn_id')
+        reference, collection_id = data.get('external_reference'), data.get('collection_id')
+        if not reference or not collection_id:
+            error_msg = 'MercadoPago: received data with missing reference (%s) or collection_id (%s)' % (reference,collection_id)
             _logger.error(error_msg)
             raise ValidationError(error_msg)
 
@@ -352,52 +353,58 @@ class TxMercadoPago(osv.Model):
 
     def _mercadopago_form_get_invalid_parameters(self, cr, uid, tx, data, context=None):
         invalid_parameters = []
-        if data.get('notify_version')[0] != '3.4':
-            _logger.warning(
-                'Received a notification from MercadoPago with version %s instead of 2.6. This could lead to issues when managing it.' %
-                data.get('notify_version')
-            )
-        if data.get('test_ipn'):
-            _logger.warning(
-                'Received a notification from MercadoLibre using sandbox'
-            ),
+        _logger.warning('Received a notification from MercadoLibre.')
 
         # TODO: txn_id: shoudl be false at draft, set afterwards, and verified with txn details
-        if tx.acquirer_reference and data.get('txn_id') != tx.acquirer_reference:
-            invalid_parameters.append(('txn_id', data.get('txn_id'), tx.acquirer_reference))
+#        if tx.acquirer_reference and data.get('txn_id') != tx.acquirer_reference:
+#            invalid_parameters.append(('txn_id', data.get('txn_id'), tx.acquirer_reference))
         # check what is buyed
-        if float_compare(float(data.get('mc_gross', '0.0')), (tx.amount + tx.fees), 2) != 0:
-            invalid_parameters.append(('mc_gross', data.get('mc_gross'), '%.2f' % tx.amount))  # mc_gross is amount + fees
-        if data.get('mc_currency') != tx.currency_id.name:
-            invalid_parameters.append(('mc_currency', data.get('mc_currency'), tx.currency_id.name))
-        if 'handling_amount' in data and float_compare(float(data.get('handling_amount')), tx.fees, 2) != 0:
-            invalid_parameters.append(('handling_amount', data.get('handling_amount'), tx.fees))
+#        if float_compare(float(data.get('mc_gross', '0.0')), (tx.amount + tx.fees), 2) != 0:
+#            invalid_parameters.append(('mc_gross', data.get('mc_gross'), '%.2f' % tx.amount))  # mc_gross is amount + fees
+#        if data.get('mc_currency') != tx.currency_id.name:
+#            invalid_parameters.append(('mc_currency', data.get('mc_currency'), tx.currency_id.name))
+#        if 'handling_amount' in data and float_compare(float(data.get('handling_amount')), tx.fees, 2) != 0:
+#            invalid_parameters.append(('handling_amount', data.get('handling_amount'), tx.fees))
         # check buyer
-        if tx.partner_reference and data.get('payer_id') != tx.partner_reference:
-            invalid_parameters.append(('payer_id', data.get('payer_id'), tx.partner_reference))
+#        if tx.partner_reference and data.get('payer_id') != tx.partner_reference:
+#            invalid_parameters.append(('payer_id', data.get('payer_id'), tx.partner_reference))
         # check seller
-        if data.get('receiver_email') != tx.acquirer_id.mercadopago_email_account:
-            invalid_parameters.append(('receiver_email', data.get('receiver_email'), tx.acquirer_id.mercadopago_email_account))
-        if data.get('receiver_id') and tx.acquirer_id.mercadopago_seller_account and data['receiver_id'] != tx.acquirer_id.mercadopago_seller_account:
-            invalid_parameters.append(('receiver_id', data.get('receiver_id'), tx.acquirer_id.mercadopago_seller_account))
+#        if data.get('receiver_email') != tx.acquirer_id.mercadopago_email_account:
+#            invalid_parameters.append(('receiver_email', data.get('receiver_email'), tx.acquirer_id.mercadopago_email_account))
+#        if data.get('receiver_id') and tx.acquirer_id.mercadopago_seller_account and data['receiver_id'] != tx.acquirer_id.mercadopago_seller_account:
+#            invalid_parameters.append(('receiver_id', data.get('receiver_id'), tx.acquirer_id.mercadopago_seller_account))
 
         return invalid_parameters
 
+#From https://developers.mercadopago.com/documentacion/notificaciones-de-pago
+#
+#approved 	El pago fue aprobado y acreditado.
+#pending 	El usuario no completó el proceso de pago.
+#in_process	El pago está siendo revisado.
+#rejected 	El pago fue rechazado. El usuario puede intentar nuevamente.
+#refunded (estado terminal) 	El pago fue devuelto al usuario.
+#cancelled (estado terminal) 	El pago fue cancelado por superar el tiempo necesario para realizar el pago o por una de las partes.
+#in_mediation 	Se inició una disputa para el pago.
+#charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
+    #called by Trans.form_feedback(...) > %s_form_validate(...)
     def _mercadopago_form_validate(self, cr, uid, tx, data, context=None):
-        status = data.get('payment_status')
+        status = data.get('collection_status')
         data = {
-            'acquirer_reference': data.get('txn_id'),
-            'mercadopago_txn_type': data.get('payment_type'),
-            'partner_reference': data.get('payer_id')
+            'acquirer_reference': data.get('external_reference'),
+            'mercadopago_txn_type': data.get('payment_type')            
         }
-        if status in ['Completed', 'Processed']:
+        if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (tx.reference))
             data.update(state='done', date_validate=data.get('payment_date', fields.datetime.now()))
             return tx.write(data)
-        elif status in ['Pending', 'Expired']:
+        elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (tx.reference))
             data.update(state='pending', state_message=data.get('pending_reason', ''))
             return tx.write(data)
+        elif status in ['cancelled','refunded','charged_back','rejected']:
+            _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (tx.reference))
+            data.update(state='cancel', state_message=data.get('cancel_reason', ''))
+            return tx.write(data)            
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (tx.reference, status)
             _logger.info(error)
