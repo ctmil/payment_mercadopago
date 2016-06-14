@@ -7,12 +7,12 @@
             <field name="model">payment.acquirer</field>
             <field name="inherit_id" ref="payment.acquirer_form"/>
             <field name="arch" type="xml">
-                <xpath expr='//group[@name="acquirer_display"]' position='after'>
+                <xpath expr="//group[@name='acquirer']" position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'mercadopago')]}">
                         <group>
                             <group>
                                 <field name="mercadopago_email_account"/>
-                                <field name="mercadopago_seller_account"/>
+                                <!--field name="mercadopago_seller_account"/-->
                                 <field name="mercadopago_use_ipn"/>
                                 <field name="mercadopago_api_enabled"
                                     invisible="1"/> <!-- WIP in saas-3 -->
