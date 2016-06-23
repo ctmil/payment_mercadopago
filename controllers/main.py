@@ -74,14 +74,39 @@ class MercadoPagoController(http.Controller):
     @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
-        ###
-        # recibimo algo como
-        # http://www.yoursite.com/notifications? \
-        # topic=payment&id=identificador-de-la-operación
-        # segun el topic:
-        # luego se consulta con el "id"
-        ###
-        self.mercadopago_validate_data(**post)
+        topic = request.httprequest.args.get('topic')
+        merchant_order_id = request.httprequest.args.get('id')
+
+        if not topic and not merchant_order_id:
+            raise ValidationError(_("Incomplete request."))
+
+        cr, uid, context = request.cr, request.uid, request.context
+        transaction = request.registry['payment.transaction']
+        tx_ids = transaction.search(cr, uid,
+                                    [('acquirer_reference', '=', merchant_order_id)],
+                                    context=context)
+
+        if not tx_ids:
+            raise ValidationError(
+                _("Not valid status with reference %s") % merchant_order_id)
+
+        tx = transaction.browse(cr, uid, tx_ids[0], context=context)
+
+        if topic == 'merchant_order':
+            # New order. None do.
+            resource = request.jsonrequest.get('resource')
+            _logger.info("MercadoPago: New order %s." % merchant_order_id)
+        elif topic == 'payment':
+            # Payment confirmation.
+            _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
+            tx.form_feedback(
+                cr, SUPERUSER_ID,
+                post, 'mercadopago',
+                context=context)
+        else:
+            _logger.info("MercadoPago: Unknown topic %s for %s."
+                         % (topic, merchant_order_id))
+
         return ''
 
     @http.route('/payment/mercadopago/dpn', type='http', auth="none")
