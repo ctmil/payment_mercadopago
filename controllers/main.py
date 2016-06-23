@@ -77,6 +77,8 @@ class MercadoPagoController(http.Controller):
         topic = request.httprequest.args.get('topic')
         merchant_order_id = request.httprequest.args.get('id')
 
+        _logger.info('Processing IPN: %s for %s' % (topic, merchant_order_id))
+
         if not topic and not merchant_order_id:
             raise ValidationError(_("Incomplete request."))
 

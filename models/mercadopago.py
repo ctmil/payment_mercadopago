@@ -210,6 +210,7 @@ class TxMercadoPago(models.Model):
 
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data):
+        print "[%s]_mercadopago_form_get_tx_from_data" % __name__
         reference, collection_id =\
             data.get('external_reference'), data.get('collection_id')
 
@@ -234,10 +235,12 @@ class TxMercadoPago(models.Model):
 
     @api.model
     def _mercadopago_form_get_invalid_parameters(self, tx, data):
+        print "[%s]_mercadopago_form_get_invalid_parameters" % __name__
         return []
 
     @api.model
     def _mercadopago_form_validate(self, tx, data):
+        print "[%s]_mercadopago_form_validate" % __name__
         status = data.get('collection_status')
         pay = tx.env['payment.method']
         data = {
@@ -298,6 +301,7 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
+        print "[%s]_mercadopago_try_url" % __name__
         raise NotImplemented
         done, res = False, None
         while (not done and tries):
@@ -328,6 +332,7 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
+        print "[%s]_mercadopago_s2s_send" % __name__
         raise NotImplemented
 
         tx = self.create(values)
@@ -394,6 +399,7 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
+        print "[%s]_mercadopago_s2s_get_invalid_parameters" % __name__
         raise NotImplemented
         invalid_parameters = []
         return invalid_parameters
@@ -407,6 +413,7 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
+        print "[%s]_mercadopago_s2s_validate" % __name__
         raise NotImplemented
         tx = self
         values = json.loads(data)
@@ -450,6 +457,7 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
+        print "[%s]_mercadopago_s2s_get_tx_status" % __name__
         raise NotImplemented
         # TDETODO: check tx.mercadopago_txn_id is set
         tx = self
