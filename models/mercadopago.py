@@ -209,6 +209,14 @@ class TxMercadoPago(models.Model):
     # --------------------------------------------------
 
     @api.model
+    def mercadopago_create(self, data):
+        print "[%s]mercadopago_create" % __name__
+        print data
+        return {
+            'acquirer_reference': data.get('merchant_order_id')
+        }
+
+    @api.model
     def _mercadopago_form_get_tx_from_data(self, data):
         print "[%s]_mercadopago_form_get_tx_from_data" % __name__
         reference, collection_id =\
