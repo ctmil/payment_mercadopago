@@ -166,6 +166,8 @@ class AcquirerMercadopago(models.Model):
         # Generate Preference.
         res = MPago.create_preference(preference)
 
+        print "Pref:", res
+
         if 'response' not in res or 'id' not in res['response']:
             error_msg = 'Returning response is:'
             error_msg += json.dumps(res, indent=2)
