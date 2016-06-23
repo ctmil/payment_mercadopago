@@ -71,7 +71,7 @@ class MercadoPagoController(http.Controller):
             'mercadopago',
             context=context)
 
-    @http.route('/payment/mercadopago/ipn/', type='http', auth='none')
+    @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         ###

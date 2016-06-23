@@ -241,7 +241,7 @@ class TxMercadoPago(models.Model):
         status = data.get('collection_status')
         pay = tx.env['payment.method']
         data = {
-            'acquirer_reference': data.get('external_reference'),
+            'acquirer_reference': data.get('reference'),
             'payment_method_id': (
                 pay.search([('acquirer_ref', '=', data.get('payment_type'))])
                 or
