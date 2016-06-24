@@ -93,7 +93,7 @@ class MercadoPagoController(http.Controller):
             # New order with transaction.
             _logger.info("MercadoPago: Confirm order %s for local order %s." %
                          (merchant_order_id, tx.reference))
-        if not tx and topic == 'merchant_order':
+        elif not tx and topic == 'merchant_order':
             # New order without transaction. Need create one!
             _logger.info("MercadoPago: New order %s." % merchant_order_id)
         elif tx and topic == 'payment':
