@@ -8,6 +8,9 @@ from openerp import http, SUPERUSER_ID, _
 from openerp.http import request
 from openerp.exceptions import ValidationError
 
+from openerp.addons.payment_mercadopago.mercadopago import \
+    mercadopago
+
 _logger = logging.getLogger(__name__)
 
 
