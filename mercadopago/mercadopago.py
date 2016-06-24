@@ -340,6 +340,24 @@ class MP(object):
         result = self.__rest_client.put(uri, data, params)
         return result
 
+    def get_merchant_order(self, id):
+        """
+        Get information for specific merchant order
+
+        @param id
+        @return json
+        """
+
+        try:
+            access_token = self.get_access_token()
+        except Exception, e:
+            raise e
+
+        merchant_order_info = self.__rest_client.get(
+            "/merchant_orders/{0}?access_token={1}".format(
+                id, access_token))
+        return merchant_order_info
+
     ############################################################################
     class __RestClient(object):
         __API_BASE_URL = "https://api.mercadolibre.com"

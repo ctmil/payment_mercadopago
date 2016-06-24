@@ -82,13 +82,18 @@ class MercadoPagoController(http.Controller):
         if not topic and not merchant_order_id:
             raise ValidationError(_("Incomplete request."))
 
-        import pdb; pdb.set_trace()
-
-        acquirer.search_read(cr, uid,
-                             [('provider','=','mercadopago')],
-                             ['mercadopago_access_token'])
-
         cr, uid, context = request.cr, request.uid, request.context
+        acquirer = request.registry['payment.acquirer']
+
+        import pdb; pdb.set_trace()
+        for acq in acquirer.search_read(cr, uid,
+                                        [('provider','=','mercadopago')],
+                                        ['mercadopago_client_id',
+                                         'mercadopago_secret_key']):
+            MPago = mercadopago.MP(acq['mercadopago_client_id'],
+                                   acq['mercadopago_secret_key'])
+            merchant_order = MPago.get_merchant_order(merchant_order_id)
+
         transaction = request.registry['payment.transaction']
         tx_ids = transaction.search(
             cr, uid,
