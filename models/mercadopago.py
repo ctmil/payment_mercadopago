@@ -245,7 +245,7 @@ class AcquirerMercadopago(models.Model):
 
             res = res | txs
 
-        return txs
+        return res
 
     @api.model
     def mercadopago_get_collection(self, collection_id):
@@ -272,6 +272,8 @@ class AcquirerMercadopago(models.Model):
             collection = acq \
                 .mercadopago_get_collection(collection_id)
 
+            import pdb; pdb.set_trace()
+
             external_reference = collection.get('external_reference')
             if not external_reference:
                 continue
@@ -284,7 +286,7 @@ class AcquirerMercadopago(models.Model):
 
             res = res | txs
 
-        return txs
+        return res
 
 
 class TxMercadoPago(models.Model):
