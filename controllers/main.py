@@ -82,24 +82,20 @@ class MercadoPagoController(http.Controller):
         if not topic and not merchant_order_id:
             raise ValidationError(_("Incomplete request."))
 
-        cr, uid, context = request.cr, request.uid, request.context
+        cr, context = request.cr, request.context
         acquirer = request.registry['payment.acquirer']
-        transaction = request.registry['payment.transaction']
 
-        tx_ids = acquirer.mercadopago_get_transaction_by_merchant_order(
+        tx = acquirer.mercadopago_get_transaction_by_merchant_order(
             cr, SUPERUSER_ID, merchant_order_id)
 
-        if not tx_ids:
-            raise ValidationError(
-                _("Not valid transaction with reference %s") % merchant_order_id)
-
-        tx = transaction.browse(cr, uid, tx_ids[0], context=context)
-
-        if topic == 'merchant_order':
-            # New order. None do.
-            resource = request.jsonrequest.get('resource')
+        if tx and topic == 'merchant_order':
+            # New order with transaction.
+            _logger.info("MercadoPago: New order %s with transaction." %
+                         (merchant_order_id, tx.name))
+        if not tx and topic == 'merchant_order':
+            # New order without transaction. Need create one!
             _logger.info("MercadoPago: New order %s." % merchant_order_id)
-        elif topic == 'payment':
+        elif tx and topic == 'payment':
             # Payment confirmation.
             _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
             tx.form_feedback(
