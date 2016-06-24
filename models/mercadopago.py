@@ -213,6 +213,9 @@ class AcquirerMercadopago(models.Model):
     def mercadopago_get_transaction_by_merchant_order(self, merchant_order_id):
         transaction = self.env['payment.transaction']
 
+        import pdb
+        pdb.set_trace()
+
         res = transaction
         for acq in self.search([('provider', '=', 'mercadopago')]):
             MPago = mercadopago.MP(acq.mercadopago_client_id,
