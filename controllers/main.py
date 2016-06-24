@@ -97,10 +97,13 @@ class MercadoPagoController(http.Controller):
             _logger.info("MercadoPago: New order %s." % merchant_order_id)
         elif tx and topic == 'payment':
             # Payment confirmation.
+            import pdb; pdb.set_trace()
             _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
+            merchant_order = tx.aquirer_id \
+                .mercadopago_get_merchant_order(merchant_order_id)
             tx.form_feedback(
                 cr, SUPERUSER_ID,
-                post, 'mercadopago',
+                merchant_order, 'mercadopago',
                 context=context)
         else:
             _logger.info("MercadoPago: Unknown topic %s for %s."

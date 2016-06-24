@@ -210,25 +210,33 @@ class AcquirerMercadopago(models.Model):
         return res
 
     @api.model
+    def mercadopago_get_merchant_order(self, merchant_order_id):
+        self.ensure_one()
+        acq = self
+        MPago = mercadopago.MP(acq.mercadopago_client_id,
+                               acq.mercadopago_secret_key)
+        merchant_order = MPago.get_merchant_order(merchant_order_id)
+        if 'response' in merchant_order:
+            return merchant_order['response']
+        else:
+            return False
+
+    @api.model
     def mercadopago_get_transaction_by_merchant_order(self, merchant_order_id):
         transaction = self.env['payment.transaction']
 
         res = transaction
         for acq in self.search([('provider', '=', 'mercadopago')]):
-            MPago = mercadopago.MP(acq.mercadopago_client_id,
-                                   acq.mercadopago_secret_key)
-
             txs = transaction.search(
                 [('acquirer_reference', '=', merchant_order_id),
                  ('acquirer_id', '=', acq.id)])
 
             if not txs:
-                merchant_order = MPago.get_merchant_order(merchant_order_id)
+                merchant_order = acq \
+                    .mercadopago_get_merchant_order(merchant_order_id)
 
-                external_reference = merchant_order.get('response', {}) \
-                    .get('external_reference')
-                acquirer_reference = merchant_order.get('response', {}) \
-                    .get('id')
+                external_reference = merchant_order.get('external_reference')
+                acquirer_reference = merchant_order.get('id')
                 if not external_reference:
                     continue
 
