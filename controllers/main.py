@@ -84,7 +84,7 @@ class MercadoPagoController(http.Controller):
 
         if topic == 'merchant_order':
             # New order with transaction.
-            tx = acquirer.mercadopago_get_transaction_by_merchant_order(
+            tx, mo = acquirer.mercadopago_get_transaction_by_merchant_order(
                 cr, SUPERUSER_ID, tid)
             if tx:
                 _logger.info(
@@ -95,13 +95,14 @@ class MercadoPagoController(http.Controller):
                 _logger.info("MercadoPago: New order %s." % tid)
         elif topic == 'payment':
             # Payment confirmation.
-            tx = acquirer.mercadopago_get_transaction_by_collection(
+            tx, co = acquirer.mercadopago_get_transaction_by_collection(
                 cr, SUPERUSER_ID, tid)
             if tx:
                 _logger.info("MercadoPago: New payment to %s." % tid)
                 import pdb; pdb.set_trace()
                 tx.form_feedback(
                     cr, SUPERUSER_ID,
+                    post,
                     tid, 'mercadopago',
                     context=context)
             else:

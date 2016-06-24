@@ -217,10 +217,8 @@ class AcquirerMercadopago(models.Model):
         MPago = mercadopago.MP(acq.mercadopago_client_id,
                                acq.mercadopago_secret_key)
         merchant_order = MPago.get_merchant_order(merchant_order_id)
-        if 'response' in merchant_order:
-            return merchant_order['response']
-        else:
-            return False
+
+        return merchant_order.get('response', False)
 
     @api.model
     def mercadopago_get_transaction_by_merchant_order(self, merchant_order_id):
@@ -228,6 +226,7 @@ class AcquirerMercadopago(models.Model):
         transaction = self.env['payment.transaction']
 
         res = transaction
+        mos = []
         for acq in self.search([('provider', '=', 'mercadopago')]):
             merchant_order = acq \
                 .mercadopago_get_merchant_order(merchant_order_id)
@@ -244,8 +243,9 @@ class AcquirerMercadopago(models.Model):
             txs._merchant_order_ = merchant_order
 
             res = res | txs
+            mos.append(merchant_order)
 
-        return res
+        return res, mos
 
     @api.model
     def mercadopago_get_collection(self, collection_id):
@@ -256,10 +256,8 @@ class AcquirerMercadopago(models.Model):
         MPago = mercadopago.MP(acq.mercadopago_client_id,
                                acq.mercadopago_secret_key)
         collection_info = MPago.get_collection(collection_id)
-        if 'response' in collection_info:
-            return collection_info['response']
-        else:
-            return False
+
+        return collection.get('response', {}).get('collection', False)
 
     @api.model
     def mercadopago_get_transaction_by_collection(self, collection_id):
@@ -268,6 +266,7 @@ class AcquirerMercadopago(models.Model):
         transaction = self.env['payment.transaction']
 
         res = transaction
+        cos = []
         for acq in self.search([('provider', '=', 'mercadopago')]):
             collection = acq \
                 .mercadopago_get_collection(collection_id)
@@ -285,8 +284,9 @@ class AcquirerMercadopago(models.Model):
             txs._collection_ = collection
 
             res = res | txs
+            cos.append(collection)
 
-        return res
+        return res, cos
 
 
 class TxMercadoPago(models.Model):
