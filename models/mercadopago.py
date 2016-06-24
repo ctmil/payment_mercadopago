@@ -294,6 +294,7 @@ class TxMercadoPago(models.Model):
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data):
         print "[%s]_mercadopago_form_get_tx_from_data" % __name__
+        import pdb; pdb.set_trace()
         reference, collection_id =\
             data.get('external_reference'), data.get('collection_id')
 

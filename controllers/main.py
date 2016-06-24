@@ -99,12 +99,7 @@ class MercadoPagoController(http.Controller):
                 cr, SUPERUSER_ID, tid)
             if tx:
                 _logger.info("MercadoPago: New payment to %s." % tid)
-                import pdb; pdb.set_trace()
-                tx.form_feedback(
-                    cr, SUPERUSER_ID,
-                    post,
-                    tid, 'mercadopago',
-                    context=context)
+                tx.form_feedback(co[0], 'mercadopago')
             else:
                 # New payment without transaction. Need create a payment!
                 _logger.info("MercadoPago: New payment %s." % tid)
