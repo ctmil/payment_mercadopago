@@ -101,8 +101,7 @@ class AcquirerMercadopago(models.Model):
             _logger.error(error_msg)
             raise ValidationError(error_msg)
 
-        import pdb; pdb.set_trace()
-        if "reference" in values:
+        if values.get("reference", "/") != "/":
             values["acquirer_reference"], values['tx_url'] = acquirer \
                 .mercadopago_create_preference(values)
 
