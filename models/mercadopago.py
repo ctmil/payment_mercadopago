@@ -211,6 +211,7 @@ class AcquirerMercadopago(models.Model):
 
     @api.model
     def mercadopago_get_merchant_order(self, merchant_order_id):
+        print "[%s]mercadopago_get_merchant_order" % __name__
         self.ensure_one()
         acq = self
         MPago = mercadopago.MP(acq.mercadopago_client_id,
@@ -223,29 +224,63 @@ class AcquirerMercadopago(models.Model):
 
     @api.model
     def mercadopago_get_transaction_by_merchant_order(self, merchant_order_id):
+        print "[%s]mercadopago_get_transaction_by_merchant_order" % __name__
         transaction = self.env['payment.transaction']
 
         res = transaction
         for acq in self.search([('provider', '=', 'mercadopago')]):
+            merchant_order = acq \
+                .mercadopago_get_merchant_order(merchant_order_id)
+
+            external_reference = merchant_order.get('external_reference')
+            acquirer_reference = merchant_order.get('id')
+            if not external_reference:
+                continue
+
             txs = transaction.search(
-                [('acquirer_reference', '=', merchant_order_id),
-                 ('acquirer_id', '=', acq.id)])
+                [('reference', '=', external_reference),
+                 ('acquirer_id', '=', acq.id)],
+                )
+            txs._merchant_order_ = merchant_order
 
-            if not txs:
-                merchant_order = acq \
-                    .mercadopago_get_merchant_order(merchant_order_id)
+            res = res | txs
 
-                external_reference = merchant_order.get('external_reference')
-                acquirer_reference = merchant_order.get('id')
-                if not external_reference:
-                    continue
+        return txs
 
-                txs = transaction.search(
-                    [('reference', '=', external_reference),
-                     ('acquirer_id', '=', acq.id)],
-                    )
+    @api.model
+    def mercadopago_get_collection(self, collection_id):
+        print "[%s]mercadopago_get_collection" % __name__
 
-                txs.write({'acquirer_reference': acquirer_reference})
+        self.ensure_one()
+        acq = self
+        MPago = mercadopago.MP(acq.mercadopago_client_id,
+                               acq.mercadopago_secret_key)
+        collection_info = MPago.get_collection(collection_id)
+        if 'response' in collection_info:
+            return collection_info['response']
+        else:
+            return False
+
+    @api.model
+    def mercadopago_get_transaction_by_collection(self, collection_id):
+        print "[%s]mercadopago_get_transaction_by_collection" % __name__
+
+        transaction = self.env['payment.transaction']
+
+        res = transaction
+        for acq in self.search([('provider', '=', 'mercadopago')]):
+            collection = acq \
+                .mercadopago_get_collection(collection_id)
+
+            external_reference = collection.get('external_reference')
+            if not external_reference:
+                continue
+
+            txs = transaction.search(
+                [('reference', '=', external_reference),
+                 ('acquirer_id', '=', acq.id)],
+                )
+            txs._collection_ = collection
 
             res = res | txs
 

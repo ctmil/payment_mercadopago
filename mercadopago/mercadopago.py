@@ -358,6 +358,24 @@ class MP(object):
                 id, access_token))
         return merchant_order_info
 
+    def get_collection(self, id):
+        """
+        Get information for specific collection
+
+        @param id
+        @return json
+        """
+
+        try:
+            access_token = self.get_access_token()
+        except Exception, e:
+            raise e
+
+        collection_info = self.__rest_client.get(
+            "/collections/notifications/{0}?access_token={1}".format(
+                id, access_token))
+        return collection_info
+
     ############################################################################
     class __RestClient(object):
         __API_BASE_URL = "https://api.mercadolibre.com"

@@ -10,6 +10,7 @@ from openerp.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
+IPN_BASIC_TOPICS = ['merchant_order', 'payment']
 
 class MercadoPagoController(http.Controller):
     _notify_url = '/payment/mercadopago/ipn/'
@@ -75,36 +76,38 @@ class MercadoPagoController(http.Controller):
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         topic = request.httprequest.args.get('topic')
-        merchant_order_id = request.httprequest.args.get('id')
+        tid = request.httprequest.args.get('id')
 
-        _logger.info('Processing IPN: %s for %s' % (topic, merchant_order_id))
-
-        if not topic and not merchant_order_id:
-            raise ValidationError(_("Incomplete request."))
+        _logger.info('Processing IPN: %s for %s' % (topic, tid))
 
         cr, context = request.cr, request.context
         acquirer = request.registry['payment.acquirer']
 
-        tx = acquirer.mercadopago_get_transaction_by_merchant_order(
-            cr, SUPERUSER_ID, merchant_order_id)
-
-        import pdb; pdb.set_trace()
-        if tx and topic == 'merchant_order':
+        if topic == 'merchant_order':
             # New order with transaction.
-            _logger.info("MercadoPago: Confirm order %s for local order %s." %
-                         (merchant_order_id, tx.reference))
-        elif not tx and topic == 'merchant_order':
-            # New order without transaction. Need create one!
-            _logger.info("MercadoPago: New order %s." % merchant_order_id)
-        elif tx and topic == 'payment':
+            tx = acquirer.mercadopago_get_transaction_by_merchant_order(
+                cr, SUPERUSER_ID, tid)
+            if tx:
+                _logger.info("MercadoPago: Confirm order %s for local order %s." %
+                            (merchant_order_id, tx.reference))
+            else:
+                # New order without transaction. Need create one!
+                _logger.info("MercadoPago: New order %s." % merchant_order_id)
+        elif topic == 'payment':
             # Payment confirmation.
-            _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
-            merchant_order = tx.aquirer_id \
-                .mercadopago_get_merchant_order(merchant_order_id)
-            tx.form_feedback(
-                cr, SUPERUSER_ID,
-                merchant_order, 'mercadopago',
-                context=context)
+            tx = acquirer.mercadopago_get_transaction_by_collection(
+                cr, SUPERUSER_ID, tid)
+            if tx:
+                _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
+                merchant_order = tx.aquirer_id \
+                    .mercadopago_get_merchant_order(merchant_order_id)
+                tx.form_feedback(
+                    cr, SUPERUSER_ID,
+                    merchant_order, 'mercadopago',
+                    context=context)
+            else:
+                # New payment without transaction. Need create a payment!
+                _logger.info("MercadoPago: New payment %s." % merchant_order_id)
         else:
             _logger.info("MercadoPago: Unknown topic %s for %s."
                          % (topic, merchant_order_id))
