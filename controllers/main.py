@@ -10,7 +10,6 @@ from openerp.exceptions import ValidationError
 
 _logger = logging.getLogger(__name__)
 
-IPN_BASIC_TOPICS = ['merchant_order', 'payment']
 
 class MercadoPagoController(http.Controller):
     _notify_url = '/payment/mercadopago/ipn/'
@@ -88,29 +87,29 @@ class MercadoPagoController(http.Controller):
             tx = acquirer.mercadopago_get_transaction_by_merchant_order(
                 cr, SUPERUSER_ID, tid)
             if tx:
-                _logger.info("MercadoPago: Confirm order %s for local order %s." %
-                            (merchant_order_id, tx.reference))
+                _logger.info(
+                    "MercadoPago: Confirm order %s for local order %s." %
+                    (tid, tx.reference))
             else:
                 # New order without transaction. Need create one!
-                _logger.info("MercadoPago: New order %s." % merchant_order_id)
+                _logger.info("MercadoPago: New order %s." % tid)
         elif topic == 'payment':
             # Payment confirmation.
             tx = acquirer.mercadopago_get_transaction_by_collection(
                 cr, SUPERUSER_ID, tid)
             if tx:
-                _logger.info("MercadoPago: New payment to %s." % merchant_order_id)
-                merchant_order = tx.aquirer_id \
-                    .mercadopago_get_merchant_order(merchant_order_id)
+                _logger.info("MercadoPago: New payment to %s." % tid)
+                import pdb; pdb.set_trace()
                 tx.form_feedback(
                     cr, SUPERUSER_ID,
-                    merchant_order, 'mercadopago',
+                    tid, 'mercadopago',
                     context=context)
             else:
                 # New payment without transaction. Need create a payment!
-                _logger.info("MercadoPago: New payment %s." % merchant_order_id)
+                _logger.info("MercadoPago: New payment %s." % tid)
         else:
             _logger.info("MercadoPago: Unknown topic %s for %s."
-                         % (topic, merchant_order_id))
+                         % (topic, tid))
 
         return ''
 
