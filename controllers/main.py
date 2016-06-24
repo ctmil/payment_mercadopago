@@ -8,9 +8,6 @@ from openerp import http, SUPERUSER_ID, _
 from openerp.http import request
 from openerp.exceptions import ValidationError
 
-from openerp.addons.payment_mercadopago.mercadopago import \
-    mercadopago
-
 _logger = logging.getLogger(__name__)
 
 
@@ -87,25 +84,17 @@ class MercadoPagoController(http.Controller):
 
         cr, uid, context = request.cr, request.uid, request.context
         acquirer = request.registry['payment.acquirer']
-
-        import pdb; pdb.set_trace()
-        for acq in acquirer.search_read(cr, uid,
-                                        [('provider','=','mercadopago')],
-                                        ['mercadopago_client_id',
-                                         'mercadopago_secret_key']):
-            MPago = mercadopago.MP(acq['mercadopago_client_id'],
-                                   acq['mercadopago_secret_key'])
-            merchant_order = MPago.get_merchant_order(merchant_order_id)
-
         transaction = request.registry['payment.transaction']
-        tx_ids = transaction.search(
-            cr, uid,
-            [('acquirer_reference', '=', merchant_order_id)],
-            context=context)
+
+        tx_ids = acquirer.mercadopago_get_transaction_by_merchant_order(
+            cr, uid, merchant_order_id)
+
+        import pdb
+        pdb.set_trace()
 
         if not tx_ids:
             raise ValidationError(
-                _("Not valid status with reference %s") % merchant_order_id)
+                _("Not valid transaction with reference %s") % merchant_order_id)
 
         tx = transaction.browse(cr, uid, tx_ids[0], context=context)
 

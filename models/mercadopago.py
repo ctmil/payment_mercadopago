@@ -209,6 +209,40 @@ class AcquirerMercadopago(models.Model):
             res[acquirer.id] = MPago.get_access_token()
         return res
 
+    @api.model
+    def mercadopago_get_transaction_by_merchant_order(self, merchant_order_id):
+        transaction = self.env['payment.transaction']
+
+        res = transaction
+        for acq in self.search(['provider', '=', 'mercadopago']):
+            MPago = mercadopago.MP(acq.mercadopago_client_id,
+                                   acq.mercadopago_secret_key)
+
+            txs = transaction.search(
+                [('acquirer_reference', '=', merchant_order_id),
+                 ('acquirer_id', '=', acq.id)])
+
+            if not txs:
+                merchant_order = MPago.get_merchant_order(merchant_order_id)
+
+                external_reference = merchant_order.get('response', {}) \
+                    .get('external_reference')
+                acquirer_reference = merchant_order.get('response', {}) \
+                    .get('id')
+                if not external_reference:
+                    continue
+
+                txs = transaction.search(
+                    [('reference', '=', external_reference),
+                     ('acquirer_id', '=', acq.id)],
+                    )
+
+                txs.write({'acquirer_reference': acquirer_reference})
+
+            res = res | txs
+
+        return txs
+
 
 class TxMercadoPago(models.Model):
     _inherit = 'payment.transaction'
