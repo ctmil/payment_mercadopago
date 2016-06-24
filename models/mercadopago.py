@@ -214,7 +214,7 @@ class AcquirerMercadopago(models.Model):
         transaction = self.env['payment.transaction']
 
         res = transaction
-        for acq in self.search(['provider', '=', 'mercadopago']):
+        for acq in self.search([('provider', '=', 'mercadopago')]):
             MPago = mercadopago.MP(acq.mercadopago_client_id,
                                    acq.mercadopago_secret_key)
 
