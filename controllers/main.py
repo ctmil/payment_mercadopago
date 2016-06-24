@@ -82,11 +82,14 @@ class MercadoPagoController(http.Controller):
         if not topic and not merchant_order_id:
             raise ValidationError(_("Incomplete request."))
 
+        import pdb; pdb.set_trace()
+
         cr, uid, context = request.cr, request.uid, request.context
         transaction = request.registry['payment.transaction']
-        tx_ids = transaction.search(cr, uid,
-                                    [('acquirer_reference', '=', merchant_order_id)],
-                                    context=context)
+        tx_ids = transaction.search(
+            cr, uid,
+            [('acquirer_reference', '=', merchant_order_id)],
+            context=context)
 
         if not tx_ids:
             raise ValidationError(
