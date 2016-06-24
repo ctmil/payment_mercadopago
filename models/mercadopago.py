@@ -101,8 +101,10 @@ class AcquirerMercadopago(models.Model):
             _logger.error(error_msg)
             raise ValidationError(error_msg)
 
-        values["acquirer_reference"], values['tx_url'] = acquirer \
-            .mercadopago_create_preference(values)
+        import pdb; pdb.set_trace()
+        if "reference" in values:
+            values["acquirer_reference"], values['tx_url'] = acquirer \
+                .mercadopago_create_preference(values)
 
         return values
 
@@ -205,18 +207,6 @@ class AcquirerMercadopago(models.Model):
 
 class TxMercadoPago(models.Model):
     _inherit = 'payment.transaction'
-
-    # --------------------------------------------------
-    # FORM RELATED METHODS
-    # --------------------------------------------------
-
-    @api.model
-    def mercadopago_create(self, data):
-        print "[%s]mercadopago_create" % __name__
-        print data
-        return {
-            'acquirer_reference': data.get('merchant_order_id')
-        }
 
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data):
