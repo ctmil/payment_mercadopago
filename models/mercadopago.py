@@ -257,7 +257,7 @@ class AcquirerMercadopago(models.Model):
                                acq.mercadopago_secret_key)
         collection_info = MPago.get_collection(collection_id)
 
-        return collection.get('response', {}).get('collection', False)
+        return collection_info.get('response', {}).get('collection', False)
 
     @api.model
     def mercadopago_get_transaction_by_collection(self, collection_id):
