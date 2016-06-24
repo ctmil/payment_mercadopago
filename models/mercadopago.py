@@ -52,12 +52,6 @@ class AcquirerMercadopago(models.Model):
     mercadopago_secret_key = fields.Char(
         'MercadoPago Secret Key',
         required_if_provider='mercadopago')
-    mercadopago_public_key = fields.Char(
-        'MercadoPago Public Key',
-        required_if_provider='mercadopago')
-    mercadopago_access_token = fields.Char(
-        'MercadoPago Access Token',
-        required_if_provider='mercadopago')
 
     _defaults = {
         'fees_active': False,
@@ -232,7 +226,6 @@ class AcquirerMercadopago(models.Model):
                 .mercadopago_get_merchant_order(merchant_order_id)
 
             external_reference = merchant_order.get('external_reference')
-            acquirer_reference = merchant_order.get('id')
             if not external_reference:
                 continue
 
@@ -294,13 +287,11 @@ class TxMercadoPago(models.Model):
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data):
         print "[%s]_mercadopago_form_get_tx_from_data" % __name__
-        import pdb; pdb.set_trace()
-        reference, collection_id =\
-            data.get('external_reference'), data.get('collection_id')
+        reference = data.get('external_reference')
 
-        if not reference or not collection_id:
+        if not reference:
             error_msg = 'MercadoPago: received data with missing reference'\
-                ' (%s) or collection_id (%s)' % (reference, collection_id)
+                ' (%s)' % (reference)
             _logger.error(error_msg)
             raise ValidationError(error_msg)
 
@@ -325,7 +316,7 @@ class TxMercadoPago(models.Model):
     @api.model
     def _mercadopago_form_validate(self, tx, data):
         print "[%s]_mercadopago_form_validate" % __name__
-        status = data.get('collection_status')
+        status = data.get('collection_status') or data.get('status_detail')
         pay = tx.env['payment.method']
         data = {
             'acquirer_reference': data.get('merchant_order_id'),
@@ -339,7 +330,7 @@ class TxMercadoPago(models.Model):
                     'acquirer_id': tx.acquirer_id.id})
             ).id
         }
-        if status in ['approved', 'processed']:
+        if status in ['approved', 'processed', 'accredited']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done'
                          % (tx.reference))
             data.update(
