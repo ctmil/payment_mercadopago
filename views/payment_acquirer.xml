@@ -14,6 +14,8 @@
 
                                 <field name="mercadopago_client_id"/>
                                 <field name="mercadopago_secret_key"/>
+                                <field name="mercadopago_public_key"/>
+                                <field name="mercadopago_access_token"/>
 
                             </group>
                         </group>

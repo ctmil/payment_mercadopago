@@ -84,6 +84,10 @@ class MercadoPagoController(http.Controller):
 
         import pdb; pdb.set_trace()
 
+        acquirer.search_read(cr, uid,
+                             [('provider','=','mercadopago')],
+                             ['mercadopago_access_token'])
+
         cr, uid, context = request.cr, request.uid, request.context
         transaction = request.registry['payment.transaction']
         tx_ids = transaction.search(
