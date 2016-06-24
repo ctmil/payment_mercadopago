@@ -272,9 +272,9 @@ class AcquirerMercadopago(models.Model):
             collection = acq \
                 .mercadopago_get_collection(collection_id)
 
-            import pdb; pdb.set_trace()
+            external_reference = collection.get('collection', {}) \
+                .get('external_reference')
 
-            external_reference = collection.get('external_reference')
             if not external_reference:
                 continue
 
