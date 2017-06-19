@@ -10,16 +10,16 @@ import urlparse
 import werkzeug.urls
 import urllib2
 
-from openerp.addons.payment.models.payment_acquirer import ValidationError
-from openerp.addons.payment_mercadopago.controllers.main import MercadoPagoController
-from openerp.osv import osv, fields
-from openerp.tools.float_utils import float_compare
-from openerp import SUPERUSER_ID
+from odoo.addons.payment.models.payment_acquirer import ValidationError
+from odoo.addons.payment_mercadopago.controllers.main import MercadoPagoController
+from odoo import osv, fields
+from odoo.tools.float_utils import float_compare
+from odoo import SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
 
 
-from openerp.addons.payment_mercadopago.mercadopago import mercadopago
+from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
 class AcquirerMercadopago(osv.Model):
     _inherit = 'payment.acquirer'
@@ -50,25 +50,24 @@ class AcquirerMercadopago(osv.Model):
 
         return providers
 
-    _columns = {
-        'mercadopago_client_id': fields.char('MercadoPago Client Id',256,required_if_provider='mercadopago'),
-        'mercadopago_secret_key': fields.char('MercadoPago Secret Key',256,required_if_provider='mercadopago'),
+    mercadopago_client_id = fields.Char('MercadoPago Client Id',256,required_if_provider='mercadopago')
+    mercadopago_secret_key = fields.Char('MercadoPago Secret Key',256,required_if_provider='mercadopago')
 
-        'mercadopago_email_account': fields.char('MercadoPago Email ID', required_if_provider='mercadopago'),
+    mercadopago_email_account = fields.Char('MercadoPago Email ID', required_if_provider='mercadopago')
 
-        'mercadopago_seller_account': fields.char(
+    mercadopago_seller_account = fields.Char(
             'MercadoPago Merchant ID',
-            help='The Merchant ID is used to ensure communications coming from MercadoPago are valid and secured.'),
+            help='The Merchant ID is used to ensure communications coming from MercadoPago are valid and secured.')
 
-        'mercadopago_use_ipn': fields.boolean('Use IPN', help='MercadoPago Instant Payment Notification'),
+    mercadopago_use_ipn = fields.Boolean('Use IPN', help='MercadoPago Instant Payment Notification')
 
-        # Server 2 server
-        'mercadopago_api_enabled': fields.boolean('Use Rest API'),
-        'mercadopago_api_username': fields.char('Rest API Username'),
-        'mercadopago_api_password': fields.char('Rest API Password'),
-        'mercadopago_api_access_token': fields.char('Access Token'),
-        'mercadopago_api_access_token_validity': fields.datetime('Access Token Validity'),
-    }
+    # Server 2 server
+    mercadopago_api_enabled = fields.Boolean('Use Rest API')
+    mercadopago_api_username = fields.Char('Rest API Username')
+    mercadopago_api_password = fields.Char('Rest API Password')
+    mercadopago_api_access_token = fields.Char('Access Token')
+    mercadopago_api_access_token_validity = fields.Datetime('Access Token Validity')
+
 
     _defaults = {
         'mercadopago_use_ipn': True,
@@ -80,23 +79,23 @@ class AcquirerMercadopago(osv.Model):
         'mercadopago_api_enabled': False,
     }
 
-    def _migrate_mercadopago_account(self, cr, uid, context=None):
+    def _migrate_mercadopago_account(self, context=None):
         """ COMPLETE ME """
 
         #cr.execute('SELECT id, mercadopago_account FROM res_company')
         #res = cr.fetchall()
-        company_ids = self.pool.get( "res.company" ).search(cr,uid,[])
-        for company in self.pool.get('res.company').browse(cr,uid,company_ids):
+        company_ids = self.env["res.company"].search([])
+        for company in self.env['res.company'].browse(company_ids):
             company_id = company.id
             company_mercadopago_account = company.mercadopago_account
         #for (company_id, company_mercadopago_account) in res:
             if company_mercadopago_account:
-                company_mercadopago_ids = self.search(cr, uid, [('company_id', '=', company_id), ('provider', '=', 'mercadopago')], limit=1, context=context)
+                company_mercadopago_ids = self.search([('company_id', '=', company_id), ('provider', '=', 'mercadopago')], limit=1, context=context)
                 if company_mercadopago_ids:
-                    self.write(cr, uid, company_mercadopago_ids, {'mercadopago_email_account': company_mercadopago_account}, context=context)
+                    self.write( company_mercadopago_ids, {'mercadopago_email_account': company_mercadopago_account}, context=context)
                 else:
                     mercadopago_view = self.pool['ir.model.data'].get_object(cr, uid, 'payment_mercadopago', 'mercadopago_acquirer_button')
-                    self.create(cr, uid, {
+                    self.create({
                         'name': 'MercadoPago',
                         'provider': 'mercadopago',
                         'mercadopago_email_account': company_mercadopago_account,
@@ -104,7 +103,7 @@ class AcquirerMercadopago(osv.Model):
                     }, context=context)
         return True
 
-    def mercadopago_compute_fees(self, cr, uid, id, amount, currency_id, country_id, context=None):
+    def mercadopago_compute_fees(self, id, amount, currency_id, country_id, context=None):
         """ Compute mercadopago fees.
 
             :param float amount: the amount to pay
@@ -113,10 +112,10 @@ class AcquirerMercadopago(osv.Model):
                                        the acquirer company country.
             :return float fees: computed fees
         """
-        acquirer = self.browse(cr, uid, id, context=context)
+        acquirer = self.browse( id, context=context)
         if not acquirer.fees_active:
             return 0.0
-        country = self.pool['res.country'].browse(cr, uid, country_id, context=context)
+        country = self.env['res.country'].browse( country_id, context=context)
         if country and acquirer.company_id.country_id.id == country.id:
             percentage = acquirer.fees_dom_var
             fixed = acquirer.fees_dom_fixed
@@ -126,9 +125,9 @@ class AcquirerMercadopago(osv.Model):
         fees = (percentage / 100.0 * amount + fixed ) / (1 - percentage / 100.0)
         return fees
 
-    def mercadopago_form_generate_values(self, cr, uid, id, partner_values, tx_values, context=None):
-        base_url = self.pool['ir.config_parameter'].get_param(cr, SUPERUSER_ID, 'web.base.url')
-        acquirer = self.browse(cr, uid, id, context=context)
+    def mercadopago_form_generate_values(self, id, partner_values, tx_values, context=None):
+        base_url = self.pool['ir.config_parameter'].get_param( SUPERUSER_ID, 'web.base.url')
+        acquirer = self.browse( id, context=context)
 
         print "mercadopago_form_generate_values: tx_values: ", tx_values
         print "partner_values:", partner_values
@@ -145,7 +144,7 @@ class AcquirerMercadopago(osv.Model):
             raise ValidationError(error_msg)
 
         jsondump = ""
-    
+
         if MPago:
 
             if acquirer.environment=="prod":
@@ -227,7 +226,7 @@ class AcquirerMercadopago(osv.Model):
             print "preference:", preference
 
             preferenceResult = MPago.create_preference(preference)
-        
+
             print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
                 if 'id' in preferenceResult['response']:
@@ -237,8 +236,8 @@ class AcquirerMercadopago(osv.Model):
                 error_msg+= json.dumps(preferenceResult, indent=2)
                 _logger.error(error_msg)
                 raise ValidationError(error_msg)
-                
-            
+
+
             if acquirer.environment=="prod":
                 linkpay = preferenceResult['response']['init_point']
             else:
@@ -250,7 +249,7 @@ class AcquirerMercadopago(osv.Model):
             print "jsondump:", jsondump
             print "MPagoPrefId: ", MPagoPrefId
             print "MPagoToken: ", MPagoToken
-            
+
 
         mercadopago_tx_values = dict(tx_values)
         if MPagoPrefId:
@@ -282,9 +281,9 @@ class AcquirerMercadopago(osv.Model):
         return partner_values, mercadopago_tx_values
 
     def mercadopago_get_form_action_url(self, cr, uid, id, context=None):
-        acquirer = self.browse(cr, uid, id, context=context)
-        mercadopago_urls = self._get_mercadopago_urls(cr, uid, acquirer.environment, context=context)['mercadopago_form_url']
-#        mercadopago_urls = mercadopago_urls + "?pref_id=" + 
+        acquirer = self.browse( id, context=context)
+        mercadopago_urls = self._get_mercadopago_urls( acquirer.environment, context=context)['mercadopago_form_url']
+#        mercadopago_urls = mercadopago_urls + "?pref_id=" +
         print "mercadopago_get_form_action_url: ", mercadopago_urls
         return mercadopago_urls
 
@@ -297,8 +296,8 @@ class AcquirerMercadopago(osv.Model):
         res = dict.fromkeys(ids, False)
         parameters = werkzeug.url_encode({'grant_type': 'client_credentials'})
 
-        for acquirer in self.browse(cr, uid, ids, context=context):
-            tx_url = self._get_mercadopago_urls(cr, uid, acquirer.environment)['mercadopago_rest_url']
+        for acquirer in self.browse( ids, context=context):
+            tx_url = self._get_mercadopago_urls( acquirer.environment)['mercadopago_rest_url']
             request = urllib2.Request(tx_url, parameters)
 
             # add other headers (https://developer.paypal.com/webapps/developer/docs/integration/direct/make-your-first-call/)
@@ -322,16 +321,15 @@ class AcquirerMercadopago(osv.Model):
 class TxMercadoPago(osv.Model):
     _inherit = 'payment.transaction'
 
-    _columns = {
-        'mercadopago_txn_id': fields.char('Transaction ID'),
-        'mercadopago_txn_type': fields.char('Transaction type'),
-    }
+    mercadopago_txn_id = fields.Char('Transaction ID')
+    mercadopago_txn_type = fields.Char('Transaction type')
+
 
     # --------------------------------------------------
     # FORM RELATED METHODS
     # --------------------------------------------------
 
-    def _mercadopago_form_get_tx_from_data(self, cr, uid, data, context=None):
+    def _mercadopago_form_get_tx_from_data(self, data, context=None):
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
         if not reference or not collection_id:
@@ -340,7 +338,7 @@ class TxMercadoPago(osv.Model):
             raise ValidationError(error_msg)
 
         # find tx -> @TDENOTE use txn_id ?
-        tx_ids = self.pool['payment.transaction'].search(cr, uid, [('reference', '=', reference)], context=context)
+        tx_ids = self.env['payment.transaction'].search( [('reference', '=', reference)], context=context)
         if not tx_ids or len(tx_ids) > 1:
             error_msg = 'MercadoPago: received data for reference %s' % (reference)
             if not tx_ids:
@@ -349,9 +347,9 @@ class TxMercadoPago(osv.Model):
                 error_msg += '; multiple order found'
             _logger.error(error_msg)
             raise ValidationError(error_msg)
-        return self.browse(cr, uid, tx_ids[0], context=context)
+        return self.browse( tx_ids[0], context=context)
 
-    def _mercadopago_form_get_invalid_parameters(self, cr, uid, tx, data, context=None):
+    def _mercadopago_form_get_invalid_parameters(self, tx, data, context=None):
         invalid_parameters = []
         _logger.warning('Received a notification from MercadoLibre.')
 
@@ -387,11 +385,11 @@ class TxMercadoPago(osv.Model):
 #in_mediation 	Se inició una disputa para el pago.
 #charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
     #called by Trans.form_feedback(...) > %s_form_validate(...)
-    def _mercadopago_form_validate(self, cr, uid, tx, data, context=None):
+    def _mercadopago_form_validate(self, tx, data, context=None):
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),
-            'mercadopago_txn_type': data.get('payment_type')            
+            'mercadopago_txn_type': data.get('payment_type')
         }
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (tx.reference))
@@ -404,7 +402,7 @@ class TxMercadoPago(osv.Model):
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (tx.reference))
             data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            return tx.write(data)            
+            return tx.write(data)
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (tx.reference, status)
             _logger.info(error)
@@ -444,7 +442,7 @@ class TxMercadoPago(osv.Model):
         res.close()
         return result
 
-    def _mercadopago_s2s_send(self, cr, uid, values, cc_values, context=None):
+    def _mercadopago_s2s_send(self, values, cc_values, context=None):
         """
          .. versionadded:: pre-v8 saas-3
          .. warning::
@@ -452,8 +450,8 @@ class TxMercadoPago(osv.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
-        tx_id = self.create(cr, uid, values, context=context)
-        tx = self.browse(cr, uid, tx_id, context=context)
+        tx_id = self.create( values, context=context)
+        tx = self.browse( tx_id, context=context)
 
         headers = {
             'Content-Type': 'application/json',
@@ -552,7 +550,7 @@ class TxMercadoPago(osv.Model):
             })
             return False
 
-    def _mercadopago_s2s_get_tx_status(self, cr, uid, tx, context=None):
+    def _mercadopago_s2s_get_tx_status(self, tx, context=None):
         """
          .. versionadded:: pre-v8 saas-3
          .. warning::
@@ -568,4 +566,4 @@ class TxMercadoPago(osv.Model):
         url = 'https://api.sandbox.paypal.com/v1/payments/payment/%s' % (tx.mercadopago_txn_id)
         request = urllib2.Request(url, headers=headers)
         data = self._mercadopago_try_url(request, tries=3, context=context)
-        return self.s2s_feedback(cr, uid, tx.id, data, context=context)
+        return self.s2s_feedback( tx.id, data, context=context)
