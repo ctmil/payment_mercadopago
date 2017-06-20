@@ -97,7 +97,7 @@ class AcquirerMercadopago(models.Model):
                 if company_mercadopago_ids:
                     self.write( company_mercadopago_ids, {'mercadopago_email_account': company_mercadopago_account}, context=context)
                 else:
-                    mercadopago_view = self.pool['ir.model.data'].get_object(cr, uid, 'payment_mercadopago', 'mercadopago_acquirer_button')
+                    mercadopago_view = self.env['ir.model.data'].get_object(cr, uid, 'payment_mercadopago', 'mercadopago_acquirer_button')
                     self.create({
                         'name': 'MercadoPago',
                         'provider': 'mercadopago',
