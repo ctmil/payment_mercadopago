@@ -12,7 +12,7 @@ import urllib2
 
 from odoo.addons.payment.models.payment_acquirer import ValidationError
 from odoo.addons.payment_mercadopago.controllers.main import MercadoPagoController
-from odoo import osv, fields
+from odoo import osv, fields, models, api
 from odoo.tools.float_utils import float_compare
 from odoo import SUPERUSER_ID
 
@@ -21,10 +21,10 @@ _logger = logging.getLogger(__name__)
 
 from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
-class AcquirerMercadopago(osv.Model):
+class AcquirerMercadopago(models.Model):
     _inherit = 'payment.acquirer'
 
-    def _get_mercadopago_urls(self, cr, uid, environment, context=None):
+    def _get_mercadopago_urls(self, environment, context=None):
         """ MercadoPago URLS """
         if environment == 'prod':
             return {
@@ -41,7 +41,7 @@ class AcquirerMercadopago(osv.Model):
                 'mercadopago_rest_url': 'https://api.sandbox.mercadolibre.com/oauth/token',
             }
 
-    def _get_providers(self, cr, uid, context=None):
+    def _get_providers(self, context=None):
 
         providers = super(AcquirerMercadopago, self)._get_providers(cr, uid, context=context)
         providers.append(['mercadopago', 'MercadoPago'])
@@ -280,14 +280,14 @@ class AcquirerMercadopago(osv.Model):
 #            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
         return partner_values, mercadopago_tx_values
 
-    def mercadopago_get_form_action_url(self, cr, uid, id, context=None):
+    def mercadopago_get_form_action_url(self, id, context=None):
         acquirer = self.browse( id, context=context)
         mercadopago_urls = self._get_mercadopago_urls( acquirer.environment, context=context)['mercadopago_form_url']
 #        mercadopago_urls = mercadopago_urls + "?pref_id=" +
         print "mercadopago_get_form_action_url: ", mercadopago_urls
         return mercadopago_urls
 
-    def _mercadopago_s2s_get_access_token(self, cr, uid, ids, context=None):
+    def _mercadopago_s2s_get_access_token(self, ids, context=None):
         """
         Note: see # see http://stackoverflow.com/questions/2407126/python-urllib2-basic-auth-problem
         for explanation why we use Authorization header instead of urllib2
@@ -318,7 +318,7 @@ class AcquirerMercadopago(osv.Model):
         return res
 
 
-class TxMercadoPago(osv.Model):
+class TxMercadoPago(models.Model):
     _inherit = 'payment.transaction'
 
     mercadopago_txn_id = fields.Char('Transaction ID')
@@ -503,7 +503,7 @@ class TxMercadoPago(osv.Model):
         result = self._mercadopago_try_url(request, tries=3, context=context)
         return (tx_id, result)
 
-    def _mercadopago_s2s_get_invalid_parameters(self, cr, uid, tx, data, context=None):
+    def _mercadopago_s2s_get_invalid_parameters(self, tx, data, context=None):
         """
          .. versionadded:: pre-v8 saas-3
          .. warning::
@@ -514,7 +514,7 @@ class TxMercadoPago(osv.Model):
         invalid_parameters = []
         return invalid_parameters
 
-    def _mercadopago_s2s_validate(self, cr, uid, tx, data, context=None):
+    def _mercadopago_s2s_validate(self, tx, data, context=None):
         """
          .. versionadded:: pre-v8 saas-3
          .. warning::
