@@ -52,12 +52,12 @@ class AcquirerMercadopago(models.Model):
 
     provider = fields.Selection(selection_add=[('mercadopago', 'MercadoPago')])
     #mercadopago_client_id = fields.Char('MercadoPago Client Id',required_if_provider='mercadopago')
-    mercadopago_client_id = fields.Char('MercadoPago Client Id')
+    mercadopago_client_id = fields.Char('MercadoPago Client Id', 256)
     #mercadopago_secret_key = fields.Char('MercadoPago Secret Key',required_if_provider='mercadopago')
-    mercadopago_secret_key = fields.Char('MercadoPago Secret Key')
+    mercadopago_secret_key = fields.Char('MercadoPago Secret Key', 256)
 
     #mercadopago_email_account = fields.Char('MercadoPago Email ID', required_if_provider='mercadopago')
-    mercadopago_email_account = fields.Char('MercadoPago Email ID')
+    mercadopago_email_account = fields.Char('MercadoPago Email ID', 256)
 
     mercadopago_seller_account = fields.Char(
             'MercadoPago Merchant ID',
