@@ -24,7 +24,7 @@
                                     invisible="1"/> <!-- WIP in saas-3 -->
                                 <field name="mercadopago_api_password"
                                     invisible="1"/> <!-- WIP in saas-3 -->
-                                <a colspan="2" href="https://github.com/ctmil/payment_mercadopago" target="_blank">How to configure your mercadopago account?</a>
+                                <!--<a colspan="2" href="https://github.com/ctmil/payment_mercadopago" target="_blank">How to configure your mercadopago account?</a>-->
                             </group>
                         </group>
                     </group>
