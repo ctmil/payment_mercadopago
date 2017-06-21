@@ -17,8 +17,7 @@ class MPSSLAdapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections,
                                        maxsize=maxsize,
-                                       block=block,
-                                       ssl_version=ssl.PROTOCOL_TLSv1)
+                                       block=block)
 
 class MPException(Exception):
     def __init__(self, value):
@@ -32,13 +31,27 @@ class MPInvalidCredentials(MPException):
 
 
 class MP(object):
-    version = "0.3.1"
+    version = "0.3.4"
     __access_data = None
+    __ll_access_token = None
     __sandbox = False
 
-    def __init__(self, client_id, client_secret):
-        self.__client_id = client_id
-        self.__client_secret = client_secret
+    def __init__(self, *args):
+        """
+        Instantiate MP with credentials:
+        mp = mercadopago.MP(client_id, client_secret)
+
+        Instantiate MP with Long Live Access Token:
+        mp = mercadopago.MP(ll_access_token)
+        """
+        if len(args) == 2:
+            self.__client_id = args[0]
+            self.__client_secret = args[1]
+        elif len(args) == 1:
+            self.__ll_access_token = args[0]
+        else:
+            raise MPInvalidCredentials(None)
+
         self.__rest_client = self.__RestClient(self)
 
     def sandbox_mode(self, enable=None):
@@ -48,6 +61,9 @@ class MP(object):
         return self.__sandbox
 
     def get_access_token(self):
+        if not self.__ll_access_token is None:
+            return self.__ll_access_token
+
         app_client_values = {
                            "client_id": self.__client_id,
                            "client_secret": self.__client_secret,
@@ -65,7 +81,7 @@ class MP(object):
     def get_payment(self, id):
         """
         Get information for specific payment
-        
+
         @param id
         @return json
         """
@@ -83,48 +99,39 @@ class MP(object):
     def get_authorized_payment(self, id):
         """
         Get information for specific authorized payment
-        
+
         @param id
         @return json
-        """    
-
-        try:
-            access_token = self.get_access_token()
-        except Exception,e:
-            raise e
-        
+        """
+        access_token = self.get_access_token()
         authorized_payment_info = self.__rest_client.get("/authorized_payments/"+id+"?access_token="+access_token)
         return authorized_payment_info
 
-    
+
     def refund_payment(self, id):
         """
         Refund accredited payment
-        
+
         @param id
         @return json
         """
-    
+
         access_token = self.get_access_token()
-
         refund_status = {"status":"refunded"}
-
         response = self.__rest_client.put("/collections/"+id+"?access_token="+access_token, refund_status)
         return response
 
-    
+
     def cancel_payment(self, id):
         """
         Cancel pending payment
-        
+
         @param id
         @return json
         """
-    
+
         access_token = self.get_access_token()
-
         cancel_status = {"status":"cancelled"}
-
         response = self.__rest_client.put("/collections/"+id+"?access_token="+access_token, cancel_status)
         return response
 
@@ -132,26 +139,21 @@ class MP(object):
     def cancel_preapproval_payment(self, id):
         """
         Cancel preapproval payment
-        
+
         @param id
         @return json
-        """    
+        """
 
-        try:
-            access_token = self.get_access_token()
-        except Exception,e:
-            raise e
-
+        access_token = self.get_access_token()
         cancel_status = {"status":"cancelled"}
-        
         response = self.__rest_client.put("/preapproval/"+id+"?access_token="+access_token, cancel_status)
         return response
-    
+
 
     def search_payment(self, filters, offset=0, limit=0):
         """
         Search payments according to filters, with pagination
-        
+
         @param filters
         @param offset
         @param limit
@@ -159,7 +161,6 @@ class MP(object):
         """
 
         access_token = self.get_access_token()
-
         filters["access_token"] = access_token
         filters["offset"] = offset
         filters["limit"] = limit
@@ -172,13 +173,12 @@ class MP(object):
     def create_preference(self, preference):
         """
         Create a checkout preference
-        
+
         @param preference
         @return json
         """
 
         access_token = self.get_access_token()
-
         preference_result = self.__rest_client.post("/checkout/preferences?access_token="+access_token, preference)
         return preference_result
 
@@ -186,14 +186,13 @@ class MP(object):
     def update_preference(self, id, preference):
         """
         Update a checkout preference
-        
+
         @param id
         @param preference
         @return json
         """
 
         access_token = self.get_access_token()
-
         preference_result = self.__rest_client.put("/checkout/preferences/"+id+"?access_token="+access_token, preference)
         return preference_result
 
@@ -201,32 +200,27 @@ class MP(object):
     def get_preference(self, id):
         """
         Update a checkout preference
-        
+
         @param id
         @param preference
         @return json
         """
         access_token = self.get_access_token()
-
         preference_result = self.__rest_client.get("/checkout/preferences/"+id+"?access_token="+access_token)
         return preference_result
-    
+
 
     def create_preapproval_payment(self, preapproval_payment):
         """
         Create a preapproval payment
-        
+
         @param preapproval_payment
         @return json
         """
-        try:
-            access_token = self.get_access_token()
-        except Exception,e:
-            raise e
-
+        access_token = self.get_access_token()
         preapproval_payment_result = self.__rest_client.post("/preapproval?access_token="+access_token, preapproval_payment)
         return preapproval_payment_result
-    
+
     def get_preapproval_payment(self, id):
         """
         Get a preapproval payment
@@ -235,14 +229,10 @@ class MP(object):
         @return json
 
         """
-        try:
-            access_token = self.get_access_token()
-        except Exception,e:
-            raise e
-        
+        access_token = self.get_access_token()
         preapproval_payment_result = self.__rest_client.get("/preapproval/"+id+"?access_token="+access_token)
         return preapproval_payment_result
-    
+
     def update_preapproval_payment(self, id, preapproval_payment):
         """
         Update a preapproval payment
@@ -251,14 +241,10 @@ class MP(object):
         @return json
 
         """
-        try:
-            access_token = self.get_access_token()
-        except Exception,e:
-            raise e
-        
+        access_token = self.get_access_token()
         preapproval_payment_result = self.__rest_client.put("/preapproval/"+id+"?access_token="+access_token, preapproval_payment)
         return preapproval_payment_result
-    
+
     def get(self, uri, params=None, authenticate=True):
         """
         Generic resource get
@@ -271,15 +257,12 @@ class MP(object):
             params = {}
 
         if authenticate:
-            try:
-                access_token = self.get_access_token()
-                params["access_token"] = access_token
-            except Exception,e:
-                raise e
+            access_token = self.get_access_token()
+            params["access_token"] = access_token
 
         result = self.__rest_client.get(uri, params)
         return result
-    
+
     def post(self, uri, data, params=None):
         """
         Generic resource post
@@ -291,15 +274,11 @@ class MP(object):
         if params is None:
             params = {}
 
-        try:
-            access_token = self.get_access_token()
-            params["access_token"] = access_token
-        except Exception,e:
-            raise e
-
+        access_token = self.get_access_token()
+        params["access_token"] = access_token
         result = self.__rest_client.post(uri, data, params)
         return result
-    
+
     def put(self, uri, data, params=None):
         """
         Generic resource put
@@ -311,18 +290,29 @@ class MP(object):
         if params is None:
             params = {}
 
-        try:
-            access_token = self.get_access_token()
-            params["access_token"] = access_token
-        except Exception,e:
-            raise e
-
+        access_token = self.get_access_token()
+        params["access_token"] = access_token
         result = self.__rest_client.put(uri, data, params)
         return result
-    
+
+    def delete(self, uri, params=None):
+        """
+        Generic resource delete
+        @param uri
+        @return json
+
+        """
+        if params is None:
+            params = {}
+
+        access_token = self.get_access_token()
+        params["access_token"] = access_token
+        result = self.__rest_client.delete(uri, params)
+        return result
+
     ##################################################################################
     class __RestClient(object):
-        __API_BASE_URL = "https://api.mercadolibre.com"
+        __API_BASE_URL = "https://api.mercadopago.com"
         MIME_JSON = "application/json"
         MIME_FORM = "application/x-www-form-urlencoded"
 
@@ -374,6 +364,17 @@ class MP(object):
 
             s = self.get_session()
             api_result = s.put(self.__API_BASE_URL+uri, params=params, data=data, headers={'User-Agent':self.USER_AGENT, 'Content-type':content_type, 'Accept':self.MIME_JSON})
+
+            response = {
+                "status": api_result.status_code,
+                "response": api_result.json()
+            }
+
+            return response
+
+        def delete(self, uri, params=None):
+            s = self.get_session()
+            api_result = s.delete(self.__API_BASE_URL+uri, params=params, headers={'User-Agent':self.USER_AGENT, 'Accept':self.MIME_JSON})
 
             response = {
                 "status": api_result.status_code,
