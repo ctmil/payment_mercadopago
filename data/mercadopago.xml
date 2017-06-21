@@ -16,6 +16,6 @@
             <field name="mercadopago_api_username">dummy</field>
             <field name="mercadopago_api_password">dummy</field>
         </record>
-        <function model="payment.acquirer" name="_migrate_mercadopago_account"/>
+        <!-- <function model="payment.acquirer" name="_migrate_mercadopago_account"/> -->
     </data>
 </odoo>
