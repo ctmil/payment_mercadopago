@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<openerp>
+<odoo>
     <data noupdate="1">
 
-        <record id="payment_acquirer_mercadopago" model="payment.acquirer">
+        <record id="payment.payment_acquirer_mercadopago" model="payment.acquirer">
             <field name="name">MercadoPago</field>
+            <field name="image" type="base64" file="payment_mercadopago/static/src/img/mercadopago_icon.png"/>
             <field name="provider">mercadopago</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="view_template_id" ref="mercadopago_acquirer_button"/>
@@ -18,4 +19,4 @@
 
         <function model="payment.acquirer" name="_migrate_mercadopago_account"/>
     </data>
-</openerp>
+</odoo>
