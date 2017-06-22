@@ -136,7 +136,7 @@ class AcquirerMercadopago(models.Model):
         fees = (percentage / 100.0 * amount + fixed ) / (1 - percentage / 100.0)
         return fees
 
-    def mercadopago_dateformat(self, date)
+    def mercadopago_dateformat(self, date):
         stf = date.strftime(dateformat)
         stf_utc_milis = date.strftime(dateformatmilis)
         stf_utc_milis = stf_utc_milis[0]+stf_utc_milis[1]+stf_utc_milis[2]
