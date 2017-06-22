@@ -24,7 +24,7 @@ from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 class AcquirerMercadopago(models.Model):
     _inherit = 'payment.acquirer'
 
-    def _get_mercadopago_urls(self, environment, context=None):
+    def _get_mercadopago_urls(self, environment):
         """ MercadoPago URLS """
         if environment == 'prod':
             return {
@@ -291,7 +291,7 @@ class AcquirerMercadopago(models.Model):
 
     @api.multi
     def mercadopago_get_form_action_url(self):
-        return self._get_mercadopago_urls( acquirer.environment, context=context)['mercadopago_form_url']
+        return self._get_mercadopago_urls( self.environment)['mercadopago_form_url']
 
     def _mercadopago_s2s_get_access_token(self, ids, context=None):
         """
