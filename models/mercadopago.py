@@ -9,6 +9,7 @@ import logging
 import urlparse
 import werkzeug.urls
 import urllib2
+import datetime
 
 from odoo.addons.payment.models.payment_acquirer import ValidationError
 from odoo.addons.payment_mercadopago.controllers.main import MercadoPagoController
@@ -174,7 +175,7 @@ class AcquirerMercadopago(models.Model):
                     #"categoryid": "Categoría",
                 }
                 ]
-                ,
+                ,import datetimeimport datetime
                 "payer": {
 		            "name": tx_values.get("partner_name"),
 		            "surname": tx_values.get("partner_first_name"),
@@ -228,8 +229,8 @@ class AcquirerMercadopago(models.Model):
 	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
-	            "expiration_date_from": "2015-01-29T11:51:49.570-04:00",
-	            "expiration_date_to": "2015-02-28T11:51:49.570-04:00"
+	            "expiration_date_from": datetime.datetime.now(),
+	            "expiration_date_to": datetime.datetime.now()+datetime.timedelta(days=31)
                 }
 
             print "preference:", preference
