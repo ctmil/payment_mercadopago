@@ -4,7 +4,7 @@
 
         <template id="mercadopago_acquirer_button">
             <form t-if="acquirer.mercadopago_email_account" t-att-action="tx_url" method="post" target="_self">
-                <input type="hidden" name="pref_id" t-att-value="tx_values['pref_id']"/>
+                <input type="hidden" name="pref_id" t-att-value="pref_id"/>
 <!--
                 <input type="hidden" name="cmd" t-att-value="tx_values['cmd']"/>
                 <input type="hidden" name="business" t-att-value="tx_values['business']"/>
