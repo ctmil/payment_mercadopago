@@ -20,8 +20,9 @@ from odoo import SUPERUSER_ID
 _logger = logging.getLogger(__name__)
 from dateutil.tz import *
 
-dateformat="%Y-%m-%dT%H:%M:%S.%f%z"
-
+dateformat="%Y-%m-%dT%H:%M:%S."
+dateformatmilis="%f"
+dateformatutc="%z"
 
 from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
@@ -135,6 +136,15 @@ class AcquirerMercadopago(models.Model):
         fees = (percentage / 100.0 * amount + fixed ) / (1 - percentage / 100.0)
         return fees
 
+    def mercadopago_dateformat(self, date)
+        stf = date.strftime(dateformat)
+        stf_utc_milis = date.strftime(dateformatmilis)
+        stf_utc_milis = stf_utc_milis[0]+stf_utc_milis[1]+stf_utc_milis[2]
+        stf_utc_zone = date.strftime(dateformatutc)
+        stf_utc_zone = stf_utc_zone[0]+stf_utc_zone[1]+stf_utc_zone[2]+":"+stf_utc_zone[3]+stf_utc_zone[4]
+        stf_utc = stf+stf_utc_milis+stf_utc_zone
+        return stf_utc
+
     @api.multi
     def mercadopago_form_generate_values(self, values):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
@@ -232,8 +242,8 @@ class AcquirerMercadopago(models.Model):
 	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
-	            "expiration_date_from": str(datetime.datetime.now(tzlocal()).strftime(dateformat)),
-	            "expiration_date_to": str((datetime.datetime.now(tzlocal())+datetime.timedelta(days=31)).strftime(dateformat))
+	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal()) ),
+	            "expiration_date_to": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())+datetime.timedelta(days=31) )
                 }
 
             print "preference:", preference
