@@ -287,7 +287,7 @@ class AcquirerMercadopago(models.Model):
 #            mercadopago_tx_values['handling'] = '%.2f' % mercadopago_tx_values.pop('fees', 0.0)
 #        if mercadopago_tx_values.get('return_url'):
 #            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
-        return partner_values, mercadopago_tx_values
+        return mercadopago_tx_values
 
     @api.multi
     def mercadopago_get_form_action_url(self):
