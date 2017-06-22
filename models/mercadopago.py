@@ -108,7 +108,7 @@ class AcquirerMercadopago(models.Model):
                     }, context=context)
         return True
 
-    def mercadopago_compute_fees(self, id, amount, currency_id, country_id, context=None):
+    def mercadopago_compute_fees(self, amount, currency_id, country_id):
         """ Compute mercadopago fees.
 
             :param float amount: the amount to pay
@@ -117,10 +117,11 @@ class AcquirerMercadopago(models.Model):
                                        the acquirer company country.
             :return float fees: computed fees
         """
-        acquirer = self.browse( id, context=context)
+        #acquirer = self.browse( id, context=context)
+        acquirer = self
         if not acquirer.fees_active:
             return 0.0
-        country = self.env['res.country'].browse( country_id, context=context)
+        country = self.env['res.country'].browse( country_id)
         if country and acquirer.company_id.country_id.id == country.id:
             percentage = acquirer.fees_dom_var
             fixed = acquirer.fees_dom_fixed
@@ -130,19 +131,22 @@ class AcquirerMercadopago(models.Model):
         fees = (percentage / 100.0 * amount + fixed ) / (1 - percentage / 100.0)
         return fees
 
-    def mercadopago_form_generate_values(self, id, partner_values, tx_values, context=None):
-        base_url = self.pool['ir.config_parameter'].get_param( SUPERUSER_ID, 'web.base.url')
-        acquirer = self.browse( id, context=context)
+    @api.multi
+    def mercadopago_form_generate_values(self, values):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        acquirer = self
 
-        print "mercadopago_form_generate_values: tx_values: ", tx_values
-        print "partner_values:", partner_values
+        #print "mercadopago_form_generate_values: tx_values: ", tx_values
+        #print "partner_values:", partner_values
+        tx_values = dict(values)
 
         MPago = False
         MPagoPrefId = False
 
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
-            print "MPago: ", MPago
+            #_logger.info( MPago )
+            print "MPago:", MPago
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -285,12 +289,9 @@ class AcquirerMercadopago(models.Model):
 #            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
         return partner_values, mercadopago_tx_values
 
-    def mercadopago_get_form_action_url(self, id, context=None):
-        acquirer = self.browse( id, context=context)
-        mercadopago_urls = self._get_mercadopago_urls( acquirer.environment, context=context)['mercadopago_form_url']
-#        mercadopago_urls = mercadopago_urls + "?pref_id=" +
-        print "mercadopago_get_form_action_url: ", mercadopago_urls
-        return mercadopago_urls
+    @api.multi
+    def mercadopago_get_form_action_url(self):
+        return self._get_mercadopago_urls( acquirer.environment, context=context)['mercadopago_form_url']
 
     def _mercadopago_s2s_get_access_token(self, ids, context=None):
         """
@@ -333,7 +334,7 @@ class TxMercadoPago(models.Model):
     # --------------------------------------------------
     # FORM RELATED METHODS
     # --------------------------------------------------
-
+    @api.model
     def _mercadopago_form_get_tx_from_data(self, data, context=None):
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
@@ -354,7 +355,8 @@ class TxMercadoPago(models.Model):
             raise ValidationError(error_msg)
         return self.browse( tx_ids[0], context=context)
 
-    def _mercadopago_form_get_invalid_parameters(self, tx, data, context=None):
+    @api.multi
+    def _mercadopago_form_get_invalid_parameters(self, data):
         invalid_parameters = []
         _logger.warning('Received a notification from MercadoLibre.')
 
@@ -390,29 +392,30 @@ class TxMercadoPago(models.Model):
 #in_mediation 	Se inició una disputa para el pago.
 #charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
     #called by Trans.form_feedback(...) > %s_form_validate(...)
-    def _mercadopago_form_validate(self, tx, data, context=None):
+    @api.multi
+    def _mercadopago_form_validate(self, data):
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),
             'mercadopago_txn_type': data.get('payment_type')
         }
         if status in ['approved', 'processed']:
-            _logger.info('Validated MercadoPago payment for tx %s: set as done' % (tx.reference))
+            _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             data.update(state='done', date_validate=data.get('payment_date', fields.datetime.now()))
-            return tx.write(data)
+            return self.write(data)
         elif status in ['pending', 'in_process','in_mediation']:
-            _logger.info('Received notification for MercadoPago payment %s: set as pending' % (tx.reference))
+            _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
             data.update(state='pending', state_message=data.get('pending_reason', ''))
-            return tx.write(data)
+            return self.write(data)
         elif status in ['cancelled','refunded','charged_back','rejected']:
-            _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (tx.reference))
+            _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (self.reference))
             data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            return tx.write(data)
+            return self.write(data)
         else:
-            error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (tx.reference, status)
+            error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (self.reference, status)
             _logger.info(error)
             data.update(state='error', state_message=error)
-            return tx.write(data)
+            return self.write(data)
 
     # --------------------------------------------------
     # SERVER2SERVER RELATED METHODS
@@ -455,8 +458,8 @@ class TxMercadoPago(models.Model):
             Experimental code. You should not use it before OpenERP v8 official
             release.
         """
-        tx_id = self.create( values, context=context)
-        tx = self.browse( tx_id, context=context)
+        tx = self.create( values, context=context)
+        tx_id = tx.id
 
         headers = {
             'Content-Type': 'application/json',
