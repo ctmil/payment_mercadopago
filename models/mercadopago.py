@@ -18,7 +18,9 @@ from odoo.tools.float_utils import float_compare
 from odoo import SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
-dateformat="%Y-%m-%dT%H:%M:%S"
+from dateutil.tz import *
+
+dateformat="%Y-%m-%dT%H:%M:%S.%f%z"
 
 
 from odoo.addons.payment_mercadopago.mercadopago import mercadopago
@@ -230,8 +232,8 @@ class AcquirerMercadopago(models.Model):
 	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
-	            "expiration_date_from": str(datetime.datetime.now().strftime(dateformat)),
-	            "expiration_date_to": str((datetime.datetime.now()+datetime.timedelta(days=31)).strftime(dateformat))
+	            "expiration_date_from": str(datetime.datetime.now(tzlocal()).strftime(dateformat)),
+	            "expiration_date_to": str((datetime.datetime.now(tzlocal())+datetime.timedelta(days=31)).strftime(dateformat))
                 }
 
             print "preference:", preference
