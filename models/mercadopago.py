@@ -171,28 +171,28 @@ class AcquirerMercadopago(models.Model):
                     "quantity": 1,
                     "currency_id":  tx_values['currency'] and tx_values['currency'].name or '',
                     "unit_price": tx_values["amount"],
-                    #"category_id": "Categoría",
+                    #"categoryid": "Categoría",
                 }
                 ]
                 ,
                 "payer": {
-		            "name": partner_values["name"],
-		            "surname": partner_values["first_name"],
-		            "email": partner_values["email"],
+		            "name": tx_values.get("partner_name"),
+		            "surname": tx_values.get("partner_first_name"),
+		            "email": tx_values.get("partner_email"),
 #		            "date_created": "2015-01-29T11:51:49.570-04:00",
-#		            "phone": {
+		            "phone": {
 #			            "area_code": "+5411",
-#			            "number": partner_values["phone"]
-#		            },
+			            "number": tx_values.get("partner_phone")
+		            },
 #		            "identification": {
 #			            "type": "DNI",
 #			            "number": "12345678"
 #		            },
-#		            "address": {
-#			            "street_name": partner_values["address"],
-#			            "street_number": "",
-#			            "zip_code": partner_values["zip"]
-#		            } contni
+		            "address": {
+			            "street_name": tx_values.get("partner_address"),
+			            "street_number": "",
+			            "zip_code": tx_values.get("partner_zip"),
+		            }
 	            },
 	            "back_urls": {
 		            "success": '%s' % urlparse.urljoin( base_url, MercadoPagoController._return_url),
