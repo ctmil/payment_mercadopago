@@ -17,7 +17,7 @@ from openerp.tools.float_utils import float_compare
 from openerp import SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
-
+from dateutil.tz import *
 
 from openerp.addons.payment_mercadopago.mercadopago import mercadopago
 
@@ -126,6 +126,15 @@ class AcquirerMercadopago(osv.Model):
         fees = (percentage / 100.0 * amount + fixed ) / (1 - percentage / 100.0)
         return fees
 
+    def mercadopago_dateformat(self, date):
+        stf = date.strftime(dateformat)
+        stf_utc_milis = date.strftime(dateformatmilis)
+        stf_utc_milis = stf_utc_milis[0]+stf_utc_milis[1]+stf_utc_milis[2]
+        stf_utc_zone = date.strftime(dateformatutc)
+        stf_utc_zone = stf_utc_zone[0]+stf_utc_zone[1]+stf_utc_zone[2]+":"+stf_utc_zone[3]+stf_utc_zone[4]
+        stf_utc = stf+stf_utc_milis+stf_utc_zone
+        return stf_utc
+
     def mercadopago_form_generate_values(self, cr, uid, id, partner_values, tx_values, context=None):
         base_url = self.pool['ir.config_parameter'].get_param(cr, SUPERUSER_ID, 'web.base.url')
         acquirer = self.browse(cr, uid, id, context=context)
@@ -145,7 +154,7 @@ class AcquirerMercadopago(osv.Model):
             raise ValidationError(error_msg)
 
         jsondump = ""
-    
+
         if MPago:
 
             if acquirer.environment=="prod":
@@ -220,14 +229,14 @@ class AcquirerMercadopago(osv.Model):
 	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
-	            "expiration_date_from": "2015-01-29T11:51:49.570-04:00",
-	            "expiration_date_to": "2015-02-28T11:51:49.570-04:00"
+	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal()) ),
+	            "expiration_date_to": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())+datetime.timedelta(days=31) )
                 }
 
             print "preference:", preference
 
             preferenceResult = MPago.create_preference(preference)
-        
+
             print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
                 if 'id' in preferenceResult['response']:
@@ -237,8 +246,8 @@ class AcquirerMercadopago(osv.Model):
                 error_msg+= json.dumps(preferenceResult, indent=2)
                 _logger.error(error_msg)
                 raise ValidationError(error_msg)
-                
-            
+
+
             if acquirer.environment=="prod":
                 linkpay = preferenceResult['response']['init_point']
             else:
@@ -250,7 +259,7 @@ class AcquirerMercadopago(osv.Model):
             print "jsondump:", jsondump
             print "MPagoPrefId: ", MPagoPrefId
             print "MPagoToken: ", MPagoToken
-            
+
 
         mercadopago_tx_values = dict(tx_values)
         if MPagoPrefId:
@@ -284,7 +293,7 @@ class AcquirerMercadopago(osv.Model):
     def mercadopago_get_form_action_url(self, cr, uid, id, context=None):
         acquirer = self.browse(cr, uid, id, context=context)
         mercadopago_urls = self._get_mercadopago_urls(cr, uid, acquirer.environment, context=context)['mercadopago_form_url']
-#        mercadopago_urls = mercadopago_urls + "?pref_id=" + 
+#        mercadopago_urls = mercadopago_urls + "?pref_id=" +
         print "mercadopago_get_form_action_url: ", mercadopago_urls
         return mercadopago_urls
 
@@ -391,7 +400,7 @@ class TxMercadoPago(osv.Model):
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),
-            'mercadopago_txn_type': data.get('payment_type')            
+            'mercadopago_txn_type': data.get('payment_type')
         }
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (tx.reference))
@@ -404,7 +413,7 @@ class TxMercadoPago(osv.Model):
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (tx.reference))
             data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            return tx.write(data)            
+            return tx.write(data)
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (tx.reference, status)
             _logger.info(error)
