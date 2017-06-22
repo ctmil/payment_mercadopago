@@ -231,7 +231,7 @@ class AcquirerMercadopago(models.Model):
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
 	            "expiration_date_from": str(datetime.datetime.now().strftime(dateformat)),
-	            "expiration_date_to": str(datetime.datetime.now()+datetime.timedelta(days=31).strftime(dateformat))
+	            "expiration_date_to": str((datetime.datetime.now()+datetime.timedelta(days=31)).strftime(dateformat))
                 }
 
             print "preference:", preference
