@@ -9,6 +9,7 @@ import logging
 import urlparse
 import werkzeug.urls
 import urllib2
+import datetime
 
 from openerp.addons.payment.models.payment_acquirer import ValidationError
 from openerp.addons.payment_mercadopago.controllers.main import MercadoPagoController
@@ -18,6 +19,10 @@ from openerp import SUPERUSER_ID
 
 _logger = logging.getLogger(__name__)
 from dateutil.tz import *
+
+dateformat="%Y-%m-%dT%H:%M:%S."
+dateformatmilis="%f"
+dateformatutc="%z"
 
 from openerp.addons.payment_mercadopago.mercadopago import mercadopago
 
