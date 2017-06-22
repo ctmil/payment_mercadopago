@@ -239,6 +239,12 @@ class AcquirerMercadopago(models.Model):
 
             print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
+                if 'error' in preferenceResult['response']:
+                    error_msg = 'Returning response is:'
+                    error_msg+= json.dumps(preferenceResult, indent=2)
+                    _logger.error(error_msg)
+                    raise ValidationError(error_msg)
+
                 if 'id' in preferenceResult['response']:
                     MPagoPrefId = preferenceResult['response']['id']
             else:
