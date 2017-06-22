@@ -136,9 +136,9 @@ class AcquirerMercadopago(models.Model):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         acquirer = self
 
-        #print "mercadopago_form_generate_values: tx_values: ", tx_values
-        #print "partner_values:", partner_values
         tx_values = dict(values)
+        print "mercadopago_form_generate_values: tx_values: ", tx_values
+        #print "partner_values:", partner_values
 
         MPago = False
         MPagoPrefId = False
