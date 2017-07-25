@@ -171,13 +171,14 @@ class AcquirerMercadopago(models.Model):
         shipments = ''
         amount = tx_values["amount"]
         melcatid = False
-        if (sorder_s and len(sorder_s.order_line)):
+        if (sorder_s):
             print "sorder_s.name: ", sorder_s.name
             print "len(sorder_s.order_line): ", len(sorder_s.order_line)
             print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
-            firstprod = sorder_s.order_line[0].product_id
-            if (firstprod.meli_category):
-                melcatid = firstprod.meli_category.meli_category_id
+            if (len(sorder_s.order_line)>0):
+                firstprod = sorder_s.order_line[0].product_id
+                if (firstprod.meli_category):
+                    melcatid = firstprod.meli_category.meli_category_id
             for oline in  sorder_s.order_line:
                 print "oline: ", oline.name
                 print "oline.product_id: ", oline.product_id
