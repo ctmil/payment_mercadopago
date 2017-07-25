@@ -11,6 +11,7 @@ import werkzeug.urls
 import urllib2
 import datetime
 import requests
+import re
 
 from odoo.addons.payment.models.payment_acquirer import ValidationError
 from odoo.addons.payment_mercadopago.controllers.main import MercadoPagoController
