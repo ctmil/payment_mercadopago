@@ -185,7 +185,7 @@ class AcquirerMercadopago(models.Model):
 
             #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
             #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
-            request
+            #request
 
             #{ "category_id": "MLA371926", "height": 30, "width": 30, "length": 30, "weight": 650 }
 
