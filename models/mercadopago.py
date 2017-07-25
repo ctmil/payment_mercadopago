@@ -158,7 +158,8 @@ class AcquirerMercadopago(models.Model):
         saleorderline_obj = self.env['sale.order.line']
         sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
         if (sorder_s):
-            print "sorder_s: ", sorder_s
+            print "sorder_s.name: ", sorder_s.name
+            print "sorder_s.line: ", sorder_s.order_line
 
         MPago = False
         MPagoPrefId = False
