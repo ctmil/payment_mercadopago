@@ -189,6 +189,12 @@ class AcquirerMercadopago(models.Model):
                 }
                 ]
                 ,
+                "shipments": {
+                    "mode": "me2",
+                    "dimensions": "30x30x30,500",
+                    "zip_code": tx_values.get("partner_zip"),
+                }
+                ,
                 "payer": {
 		            "name": tx_values.get("partner_name"),
 		            "surname": tx_values.get("partner_first_name"),
