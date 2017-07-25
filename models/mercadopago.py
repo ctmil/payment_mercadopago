@@ -192,10 +192,10 @@ class AcquirerMercadopago(models.Model):
                     uri = self.make_path(melcatidrequest)
                     print "oline melcatidrequest: ", melcatidrequest
                     response = requests.get(uri, params='', headers=headers)
-                    print "oline melcatidrequest RESPONSE: ", response
+                    print "oline melcatidrequest RESPONSE: ", str(response.content)
                     if response.status_code == requests.codes.ok:
                         rdims = response.json()
-                        dims = rdims["height"]+"x"+rdims["width"]+"x"+rdims["length"]+","+rdims["weight"]
+                        dims = str(rdims["height"])+str("x")+str(rdims["width"])+str("x")+str(rdims["length"])+str(",")+str(rdims["weight"])
                         shipments = {
                             "mode": "me2",
                             #"dimensions": "30x30x30,500",
