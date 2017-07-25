@@ -167,7 +167,7 @@ class AcquirerMercadopago(models.Model):
                 print "oline: ", oline.name
                 print "oline.product_id: ", oline.product_id
                 print "oline.product_id.name ", oline.product_id.name
-                if (str(oline.product_id.name) == str('MercadoEnvíos')):
+                if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
                     shipments = {
                         "mode": "me2",
                         "dimensions": "30x30x30,500",
