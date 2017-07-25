@@ -170,19 +170,22 @@ class AcquirerMercadopago(models.Model):
         sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
         shipments = ''
         amount = tx_values["amount"]
-        if (sorder_s):
+        melcatid = False
+        if (sorder_s and len(sorder_s.order_line)):
             print "sorder_s.name: ", sorder_s.name
             print "len(sorder_s.order_line): ", len(sorder_s.order_line)
             print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
+            firstprod = sorder_s.order_line[0].product_id
+            if (firstprod.meli_category):
+                melcatid = firstprod.meli_category.meli_category_id
             for oline in  sorder_s.order_line:
                 print "oline: ", oline.name
                 print "oline.product_id: ", oline.product_id
                 print "oline.product_id.name ", oline.product_id.name
                 #print "oline.product_id.name ", oline.product_id.
                 if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
-                    melcatid = oline.product_id.meli_category.meli_category_id
                     print "oline category: ", melcatid
-                    melcatidrequest = 'https://api.mercadolibre.com/categories/'+melcatid+'/shipping'
+                    melcatidrequest = 'https://api.mercadolibre.com/categories/'+str(melcatid)+'/shipping'
                     headers = {'Accept': 'application/json', 'Content-type':'application/json'}
                     uri = self.make_path(melcatidrequest)
                     print "oline melcatidrequest: ", melcatidrequest
