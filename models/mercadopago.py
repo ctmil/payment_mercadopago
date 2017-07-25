@@ -194,7 +194,7 @@ class AcquirerMercadopago(models.Model):
                     response = requests.get(uri, params='', headers=headers)
                     print "oline melcatidrequest RESPONSE: ", response
                     if response.status_code == requests.codes.ok:
-                        response_info = response.json()
+                        rdims = response.json()
                         dims = rdims["height"]+"x"+rdims["width"]+"x"+rdims["length"]+","+rdims["weight"]
                         shipments = {
                             "mode": "me2",
