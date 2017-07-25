@@ -10,6 +10,7 @@ import urlparse
 import werkzeug.urls
 import urllib2
 import datetime
+import requests
 
 from odoo.addons.payment.models.payment_acquirer import ValidationError
 from odoo.addons.payment_mercadopago.controllers.main import MercadoPagoController
@@ -145,6 +146,16 @@ class AcquirerMercadopago(models.Model):
         stf_utc = stf+stf_utc_milis+stf_utc_zone
         return stf_utc
 
+    def make_path(self, path, params={}):
+        # Making Path and add a leading / if not exist
+        if not (re.search("^http", path)):
+            if not (re.search("^\/", path)):
+                path = "/" + path
+            path = self.API_ROOT_URL + path
+        if params:
+            path = path + "?" + urlencode(params)
+        return path
+
     @api.multi
     def mercadopago_form_generate_values(self, values):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
@@ -167,12 +178,25 @@ class AcquirerMercadopago(models.Model):
                 print "oline: ", oline.name
                 print "oline.product_id: ", oline.product_id
                 print "oline.product_id.name ", oline.product_id.name
+                #print "oline.product_id.name ", oline.product_id.
                 if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
-                    shipments = {
-                        "mode": "me2",
-                        "dimensions": "30x30x30,500",
-                        "zip_code": tx_values.get("partner_zip"),
-                    }
+                    melcatid = oline.product_id.meli_category.meli_category_id
+                    print "oline category: ", melcatid
+                    melcatidrequest = 'https://api.mercadolibre.com/categories/'+melcatid+'/shipping'
+                    headers = {'Accept': 'application/json', 'Content-type':'application/json'}
+                    uri = self.make_path(melcatidrequest)
+                    print "oline melcatidrequest: ", melcatidrequest
+                    response = requests.get(uri, params='', headers=headers)
+                    print "oline melcatidrequest RESPONSE: ", RESPONSE
+                    if response.status_code == requests.codes.ok:
+                        response_info = response.json()
+                        dims = rdims["height"]+"x"+rdims["width"]+"x"+rdims["length"]+","+rdims["weight"]
+                        shipments = {
+                            "mode": "me2",
+                            #"dimensions": "30x30x30,500",
+                            "dimensions": dims,
+                            "zip_code": tx_values.get("partner_zip"),
+                        }
                     print "oline shipments: ", shipments
 
         MPago = False
@@ -215,8 +239,6 @@ class AcquirerMercadopago(models.Model):
                     #"categoryid": "Categoría",
                 }
                 ]
-                ,
-                "shipments": shipments
                 ,
                 "payer": {
 		            "name": tx_values.get("partner_name"),
@@ -274,6 +296,9 @@ class AcquirerMercadopago(models.Model):
 	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal()) ),
 	            "expiration_date_to": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())+datetime.timedelta(days=31) )
                 }
+
+            if (len(shipments)):
+                preference["shipments"] = shipments
 
             print "preference:", preference
 
