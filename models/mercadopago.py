@@ -154,6 +154,12 @@ class AcquirerMercadopago(models.Model):
         print "mercadopago_form_generate_values: tx_values: ", tx_values
         #print "partner_values:", partner_values
 
+        saleorder_obj = self.env['sale.order']
+        saleorderline_obj = self.env['sale.order.line']
+        sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
+        if (sorder_s):
+            print "sorder_s: ", sorder_s
+
         MPago = False
         MPagoPrefId = False
 
@@ -176,6 +182,12 @@ class AcquirerMercadopago(models.Model):
                 MPago.sandbox_mode(True)
 
             MPagoToken = MPago.get_access_token()
+
+            #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
+            #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
+            request
+
+            #{ "category_id": "MLA371926", "height": 30, "width": 30, "length": 30, "weight": 650 }
 
             preference = {
                 "items": [
