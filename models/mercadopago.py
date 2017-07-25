@@ -157,14 +157,23 @@ class AcquirerMercadopago(models.Model):
         saleorder_obj = self.env['sale.order']
         saleorderline_obj = self.env['sale.order.line']
         sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
+        shipments = ''
+        amount = tx_values["amount"]
         if (sorder_s):
             print "sorder_s.name: ", sorder_s.name
             print "len(sorder_s.order_line): ", len(sorder_s.order_line)
             print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
-            if (sorder_s.order_line[1]):
-                print "sorder_s.order_line[1]: ", sorder_s.order_line[1].name
-                print "sorder_s.order_line[1].product_id: ", sorder_s.order_line[1].product_id
-                print "sorder_s.order_line[1].product_id.name: ", sorder_s.order_line[1].product_id.name
+            for oline in  sorder_s.order_line:
+                print "oline: ", oline.name
+                print "oline.product_id: ", oline.product_id
+                print "oline.product_id.name ", oline.product_id.name
+                if (str(oline.product_id.name) == str('MercadoEnvíos')):
+                    shipments = {
+                        "mode": "me2",
+                        "dimensions": "30x30x30,500",
+                        "zip_code": tx_values.get("partner_zip"),
+                    }
+                    print "oline shipments: ", shipments
 
         MPago = False
         MPagoPrefId = False
@@ -202,16 +211,12 @@ class AcquirerMercadopago(models.Model):
                     #"picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
                     "quantity": 1,
                     "currency_id":  tx_values['currency'] and tx_values['currency'].name or '',
-                    "unit_price": tx_values["amount"],
+                    "unit_price": amount,
                     #"categoryid": "Categoría",
                 }
                 ]
                 ,
-                "shipments": {
-                    "mode": "me2",
-                    "dimensions": "30x30x30,500",
-                    "zip_code": tx_values.get("partner_zip"),
-                }
+                "shipments": shipments
                 ,
                 "payer": {
 		            "name": tx_values.get("partner_name"),
