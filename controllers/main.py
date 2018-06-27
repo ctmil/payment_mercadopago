@@ -52,10 +52,8 @@ class MercadoPagoController(http.Controller):
         reference = post.get('external_reference')
         tx = None
         if reference:
-            tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', reference)], context=context)
-            if tx_ids:
-                tx = request.registry['payment.transaction'].browse(cr, uid, tx_ids[0], context=context)
-                _logger.info('mercadopago_validate_data() > payment.transaction: %s' % tx)
+            tx = request.env['payment.transaction'].search( [('reference', '=', reference)])
+            _logger.info('mercadopago_validate_data() > payment.transaction: %s' % tx)
 
 
         _logger.info('MercadoPago: validating data')
@@ -65,7 +63,7 @@ class MercadoPagoController(http.Controller):
 
         if tx:
             _logger.info('MercadoPago: ')
-            res = request.registry['payment.transaction'].form_feedback( cr, SUPERUSER_ID, post, 'mercadopago', context=context)
+            res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
 #        https://api.mercadolibre.com/collections/?access_token=
 #        if :
@@ -104,6 +102,7 @@ class MercadoPagoController(http.Controller):
 
     @http.route('/payment/mercadopago/cancel', type='http', auth="none")
     def mercadopago_cancel(self, **post):
+        #import pdb; pdb.set_trace()
         """ When the user cancels its MercadoPago payment: GET on this route """
         cr, uid, context = request.cr, SUPERUSER_ID, request.context
         _logger.info('Beginning MercadoPago cancel with post data %s', pprint.pformat(post))  # debug

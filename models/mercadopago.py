@@ -159,11 +159,13 @@ class AcquirerMercadopago(models.Model):
 
     @api.multi
     def mercadopago_form_generate_values(self, values):
+        #import pdb; pdb.set_trace()
+
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         acquirer = self
 
         tx_values = dict(values)
-        print "mercadopago_form_generate_values: tx_values: ", tx_values
+        #print "mercadopago_form_generate_values: tx_values: ", tx_values
         #print "partner_values:", partner_values
 
         saleorder_obj = self.env['sale.order']
@@ -416,6 +418,7 @@ class TxMercadoPago(models.Model):
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data, context=None):
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
+        #import pdb; pdb.set_trace()
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
         if not reference or not collection_id:
             error_msg = 'MercadoPago: received data with missing reference (%s) or collection_id (%s)' % (reference,collection_id)
@@ -423,7 +426,7 @@ class TxMercadoPago(models.Model):
             raise ValidationError(error_msg)
 
         # find tx -> @TDENOTE use txn_id ?
-        tx_ids = self.env['payment.transaction'].search( [('reference', '=', reference)], context=context)
+        tx_ids = self.env['payment.transaction'].search( [('reference', '=', reference)])
         if not tx_ids or len(tx_ids) > 1:
             error_msg = 'MercadoPago: received data for reference %s' % (reference)
             if not tx_ids:
@@ -432,7 +435,7 @@ class TxMercadoPago(models.Model):
                 error_msg += '; multiple order found'
             _logger.error(error_msg)
             raise ValidationError(error_msg)
-        return self.browse( tx_ids[0], context=context)
+        return tx_ids
 
     @api.multi
     def _mercadopago_form_get_invalid_parameters(self, data):
@@ -473,6 +476,7 @@ class TxMercadoPago(models.Model):
     #called by Trans.form_feedback(...) > %s_form_validate(...)
     @api.multi
     def _mercadopago_form_validate(self, data):
+        #import pdb;pdb.set_trace()
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),
