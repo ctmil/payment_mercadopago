@@ -183,9 +183,9 @@ class AcquirerMercadopago(models.Model):
                 if (firstprod.meli_category):
                     melcatid = firstprod.meli_category.meli_category_id
             for oline in  sorder_s.order_line:
-                print "oline: ", oline.name
-                print "oline.product_id: ", oline.product_id
-                print "oline.product_id.name ", oline.product_id.name
+                #print "oline: ", oline.name
+                #print "oline.product_id: ", oline.product_id
+                #print "oline.product_id.name ", oline.product_id.name
                 #print "oline.product_id.name ", oline.product_id.
                 if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
                     #print "oline category: ", melcatid
