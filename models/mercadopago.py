@@ -53,7 +53,7 @@ class AcquirerMercadopago(models.Model):
         providers = super(AcquirerMercadopago, self)._get_providers(cr, uid, context=context)
         providers.append(['mercadopago', 'MercadoPago'])
 
-        print "_get_providers: ", providers
+        #print "_get_providers: ", providers
 
         return providers
 
@@ -175,9 +175,9 @@ class AcquirerMercadopago(models.Model):
         amount = tx_values["amount"]
         melcatid = False
         if (sorder_s):
-            print "sorder_s.name: ", sorder_s.name
-            print "len(sorder_s.order_line): ", len(sorder_s.order_line)
-            print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
+            #print "sorder_s.name: ", sorder_s.name
+            #print "len(sorder_s.order_line): ", len(sorder_s.order_line)
+            #print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
             if (len(sorder_s.order_line)>0):
                 firstprod = sorder_s.order_line[0].product_id
                 if (firstprod.meli_category):
@@ -188,13 +188,13 @@ class AcquirerMercadopago(models.Model):
                 print "oline.product_id.name ", oline.product_id.name
                 #print "oline.product_id.name ", oline.product_id.
                 if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
-                    print "oline category: ", melcatid
+                    #print "oline category: ", melcatid
                     melcatidrequest = 'https://api.mercadolibre.com/categories/'+str(melcatid)+'/shipping'
                     headers = {'Accept': 'application/json', 'Content-type':'application/json'}
                     uri = self.make_path(melcatidrequest)
-                    print "oline melcatidrequest: ", melcatidrequest
+                    #print "oline melcatidrequest: ", melcatidrequest
                     response = requests.get(uri, params='', headers=headers)
-                    print "oline melcatidrequest RESPONSE: ", str(response.content)
+                    #print "oline melcatidrequest RESPONSE: ", str(response.content)
                     if response.status_code == requests.codes.ok:
                         rdims = response.json()
                         dims = str(rdims["height"])+str("x")+str(rdims["width"])+str("x")+str(rdims["length"])+str(",")+str(rdims["weight"])
@@ -204,7 +204,7 @@ class AcquirerMercadopago(models.Model):
                             "dimensions": dims,
                             "zip_code": tx_values.get("partner_zip"),
                         }
-                    print "oline shipments: ", shipments
+                    #print "oline shipments: ", shipments
 
         MPago = False
         MPagoPrefId = False
@@ -212,7 +212,7 @@ class AcquirerMercadopago(models.Model):
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
             #_logger.info( MPago )
-            print "MPago:", MPago
+            #print "MPago:", MPago
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -307,11 +307,11 @@ class AcquirerMercadopago(models.Model):
             if (len(shipments)):
                 preference["shipments"] = shipments
 
-            print "preference:", preference
+            #print "preference:", preference
 
             preferenceResult = MPago.create_preference(preference)
 
-            print "preferenceResult: ", preferenceResult
+            #print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
                 if 'error' in preferenceResult['response']:
                     error_msg = 'Returning response is:'
@@ -335,10 +335,10 @@ class AcquirerMercadopago(models.Model):
 
             jsondump = json.dumps( preferenceResult, indent=2 )
 
-            print "linkpay:", linkpay
-            print "jsondump:", jsondump
-            print "MPagoPrefId: ", MPagoPrefId
-            print "MPagoToken: ", MPagoToken
+            #print "linkpay:", linkpay
+            #print "jsondump:", jsondump
+            #print "MPagoPrefId: ", MPagoPrefId
+            #print "MPagoToken: ", MPagoToken
 
 
         mercadopago_tx_values = dict(tx_values)

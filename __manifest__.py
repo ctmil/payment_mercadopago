@@ -2,7 +2,7 @@
 
 {
     'name': 'MercadoPago Payment Acquirer',
-    'category': 'Hidden',
+    'category': 'Accounting',
     'summary': 'Payment Acquirer: MercadoPago Implementation',
     'version': '1.0',
     'description': """MercadoPago Payment Acquirer""",
