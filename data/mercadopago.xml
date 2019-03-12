@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-
-        <record id="payment.payment_acquirer_mercadopago" model="payment.acquirer">
+        <record id="payment_acquirer_mercadopago" model="payment.acquirer">
             <field name="name">MercadoPago</field>
             <field name="image" type="base64" file="payment_mercadopago/static/src/img/mercadopago_icon.png"/>
             <field name="provider">mercadopago</field>
@@ -16,6 +15,5 @@
             <field name="mercadopago_api_username">dummy</field>
             <field name="mercadopago_api_password">dummy</field>
         </record>
-        <!-- <function model="payment.acquirer" name="_migrate_mercadopago_account"/> -->
     </data>
 </odoo>
