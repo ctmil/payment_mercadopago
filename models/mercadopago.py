@@ -6,10 +6,9 @@ try:
 except ImportError:
     import json
 import logging
-from urllib.parse import urlparse
-from urllib.parse import urljoin
+import urlparse
 import werkzeug.urls
-from urllib.request import urlopen
+import urllib2
 import datetime
 import requests
 import re
@@ -50,24 +49,13 @@ class AcquirerMercadopago(models.Model):
             }
 
     def _get_providers(self, context=None):
+
         providers = super(AcquirerMercadopago, self)._get_providers(cr, uid, context=context)
         providers.append(['mercadopago', 'MercadoPago'])
+
+        print "_get_providers: ", providers
+
         return providers
-
-    def _get_feature_support(self):
-        """Get advanced feature support by provider.
-
-        Each provider should add its technical in the corresponding
-        key for the following features:
-            * fees: support payment fees computations
-            * authorize: support authorizing payment (separates
-                         authorization and capture)
-            * tokenize: support saving payment data in a payment.tokenize
-                        object
-        """
-        res = super(AcquirerMercadopago, self)._get_feature_support()
-        #res['tokenize'].append('mercadopago')
-        return res
 
     provider = fields.Selection(selection_add=[('mercadopago', 'MercadoPago')])
     #mercadopago_client_id = fields.Char('MercadoPago Client Id',required_if_provider='mercadopago')
@@ -105,6 +93,9 @@ class AcquirerMercadopago(models.Model):
 
     def _migrate_mercadopago_account(self, context=None):
         """ COMPLETE ME """
+
+        #cr.execute('SELECT id, mercadopago_account FROM res_company')
+        #res = cr.fetchall()
         company_ids = self.env["res.company"].search([])
         for company in self.env['res.company'].browse(company_ids):
             company_id = company.id
@@ -133,6 +124,7 @@ class AcquirerMercadopago(models.Model):
                                        the acquirer company country.
             :return float fees: computed fees
         """
+        #acquirer = self.browse( id, context=context)
         acquirer = self
         if not acquirer.fees_active:
             return 0.0
@@ -167,6 +159,7 @@ class AcquirerMercadopago(models.Model):
 
     @api.multi
     def mercadopago_form_generate_values(self, values):
+        #import pdb; pdb.set_trace()
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         acquirer = self
@@ -182,45 +175,44 @@ class AcquirerMercadopago(models.Model):
         amount = tx_values["amount"]
         melcatid = False
         if (sorder_s):
-            #print "sorder_s.name: ", sorder_s.name
-            #print "len(sorder_s.order_line): ", len(sorder_s.order_line)
-            #print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
+            print "sorder_s.name: ", sorder_s.name
+            print "len(sorder_s.order_line): ", len(sorder_s.order_line)
+            print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
             if (len(sorder_s.order_line)>0):
                 firstprod = sorder_s.order_line[0].product_id
-                #if ('meli_category' in firstprod._fields):
-                #    melcatid = firstprod.meli_category.meli_category_id
-            if (melcatid):
-                for oline in  sorder_s.order_line:
-                    #print "oline: ", oline.name
-                    #print "oline.product_id: ", oline.product_id
-                    #print "oline.product_id.name ", oline.product_id.name
-                    #print "oline.product_id.name ", oline.product_id.
-                    if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
-                        #print "oline category: ", melcatid
-                        melcatidrequest = 'https://api.mercadolibre.com/categories/'+str(melcatid)+'/shipping'
-                        headers = {'Accept': 'application/json', 'Content-type':'application/json'}
-                        uri = self.make_path(melcatidrequest)
-                        #print "oline melcatidrequest: ", melcatidrequest
-                        response = requests.get(uri, params='', headers=headers)
-                        #print "oline melcatidrequest RESPONSE: ", str(response.content)
-                        if response.status_code == requests.codes.ok:
-                            rdims = response.json()
-                            dims = str(rdims["height"])+str("x")+str(rdims["width"])+str("x")+str(rdims["length"])+str(",")+str(rdims["weight"])
-                            shipments = {
-                                "mode": "me2",
-                                #"dimensions": "30x30x30,500",
-                                "dimensions": dims,
-                                "zip_code": tx_values.get("partner_zip"),
-                            }
-                        #print "oline shipments: ", shipments
+                if (firstprod.meli_category):
+                    melcatid = firstprod.meli_category.meli_category_id
+            for oline in  sorder_s.order_line:
+                print "oline: ", oline.name
+                print "oline.product_id: ", oline.product_id
+                print "oline.product_id.name ", oline.product_id.name
+                #print "oline.product_id.name ", oline.product_id.
+                if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
+                    print "oline category: ", melcatid
+                    melcatidrequest = 'https://api.mercadolibre.com/categories/'+str(melcatid)+'/shipping'
+                    headers = {'Accept': 'application/json', 'Content-type':'application/json'}
+                    uri = self.make_path(melcatidrequest)
+                    print "oline melcatidrequest: ", melcatidrequest
+                    response = requests.get(uri, params='', headers=headers)
+                    print "oline melcatidrequest RESPONSE: ", str(response.content)
+                    if response.status_code == requests.codes.ok:
+                        rdims = response.json()
+                        dims = str(rdims["height"])+str("x")+str(rdims["width"])+str("x")+str(rdims["length"])+str(",")+str(rdims["weight"])
+                        shipments = {
+                            "mode": "me2",
+                            #"dimensions": "30x30x30,500",
+                            "dimensions": dims,
+                            "zip_code": tx_values.get("partner_zip"),
+                        }
+                    print "oline shipments: ", shipments
 
         MPago = False
         MPagoPrefId = False
 
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
-            _logger.info( MPago )
-            #print "MPago:", MPago
+            #_logger.info( MPago )
+            print "MPago:", MPago
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -275,9 +267,9 @@ class AcquirerMercadopago(models.Model):
 		            }
 	            },
 	            "back_urls": {
-		            "success": '%s' % urljoin( base_url, MercadoPagoController._return_url),
-		            "failure": '%s' % urljoin( base_url, MercadoPagoController._cancel_url),
-		            "pending": '%s' % urljoin( base_url, MercadoPagoController._return_url)
+		            "success": '%s' % urlparse.urljoin( base_url, MercadoPagoController._return_url),
+		            "failure": '%s' % urlparse.urljoin( base_url, MercadoPagoController._cancel_url),
+		            "pending": '%s' % urlparse.urljoin( base_url, MercadoPagoController._return_url)
 	            },
 	            "auto_return": "approved",
 #	            "payment_methods": {
@@ -305,7 +297,7 @@ class AcquirerMercadopago(models.Model):
 #			            "apartment": "C"
 #		            }
 #	            },
-	            "notification_url": '%s' % urljoin( base_url, MercadoPagoController._notify_url),
+	            "notification_url": '%s' % urlparse.urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
 	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal()) ),
@@ -315,11 +307,11 @@ class AcquirerMercadopago(models.Model):
             if (len(shipments)):
                 preference["shipments"] = shipments
 
-            #print "preference:", preference
+            print "preference:", preference
 
             preferenceResult = MPago.create_preference(preference)
 
-            #print "preferenceResult: ", preferenceResult
+            print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
                 if 'error' in preferenceResult['response']:
                     error_msg = 'Returning response is:'
@@ -343,10 +335,10 @@ class AcquirerMercadopago(models.Model):
 
             jsondump = json.dumps( preferenceResult, indent=2 )
 
-            #print "linkpay:", linkpay
-            #print "jsondump:", jsondump
-            #print "MPagoPrefId: ", MPagoPrefId
-            #print "MPagoToken: ", MPagoToken
+            print "linkpay:", linkpay
+            print "jsondump:", jsondump
+            print "MPagoPrefId: ", MPagoPrefId
+            print "MPagoToken: ", MPagoToken
 
 
         mercadopago_tx_values = dict(tx_values)
@@ -378,6 +370,7 @@ class AcquirerMercadopago(models.Model):
 #            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
         return mercadopago_tx_values
 
+    @api.multi
     def mercadopago_get_form_action_url(self):
         return self._get_mercadopago_urls( self.environment)['mercadopago_form_url']
 
@@ -425,6 +418,7 @@ class TxMercadoPago(models.Model):
     @api.model
     def _mercadopago_form_get_tx_from_data(self, data, context=None):
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
+        #import pdb; pdb.set_trace()
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
         if not reference or not collection_id:
             error_msg = 'MercadoPago: received data with missing reference (%s) or collection_id (%s)' % (reference,collection_id)
@@ -443,6 +437,7 @@ class TxMercadoPago(models.Model):
             raise ValidationError(error_msg)
         return tx_ids
 
+    @api.multi
     def _mercadopago_form_get_invalid_parameters(self, data):
         invalid_parameters = []
         _logger.warning('Received a notification from MercadoLibre.')
@@ -479,7 +474,9 @@ class TxMercadoPago(models.Model):
 #in_mediation 	Se inició una disputa para el pago.
 #charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
     #called by Trans.form_feedback(...) > %s_form_validate(...)
+    @api.multi
     def _mercadopago_form_validate(self, data):
+        #import pdb;pdb.set_trace()
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),

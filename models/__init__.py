@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from . import mercadopago
-from . import res_company
+import mercadopago
+import res_company

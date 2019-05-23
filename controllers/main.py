@@ -6,7 +6,7 @@ except ImportError:
     import json
 import logging
 import pprint
-from urllib.request import urlopen
+import urllib2
 import werkzeug
 
 from odoo import http, SUPERUSER_ID
@@ -22,6 +22,7 @@ class MercadoPagoController(http.Controller):
 
     def _get_return_url(self, **post):
         """ Extract the return URL from the data coming from MercadoPago. """
+
 #        return_url = post.pop('return_url', '')
 #        if not return_url:
 #            custom = json.loads(post.pop('custom', False) or '{}')
@@ -47,7 +48,7 @@ class MercadoPagoController(http.Controller):
         topic = post.get('topic')
         op_id = post.get('id')
 
-        #cr, uid, context = request.cr, request.uid, request.context
+        cr, uid, context = request.cr, request.uid, request.context
         reference = post.get('external_reference')
         tx = None
         if reference:
@@ -101,7 +102,9 @@ class MercadoPagoController(http.Controller):
 
     @http.route('/payment/mercadopago/cancel', type='http', auth="none")
     def mercadopago_cancel(self, **post):
+        #import pdb; pdb.set_trace()
         """ When the user cancels its MercadoPago payment: GET on this route """
+        cr, uid, context = request.cr, SUPERUSER_ID, request.context
         _logger.info('Beginning MercadoPago cancel with post data %s', pprint.pformat(post))  # debug
         return_url = self._get_return_url(**post)
         status = post.get('collection_status')

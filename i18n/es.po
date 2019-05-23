@@ -18,67 +18,67 @@ msgstr ""
 "X-Generator: Launchpad (build 17156)\n"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_api_access_token:0
+#: field:payment.acquirer,mercadopago_api_access_token:0
 msgid "Access Token"
 msgstr "Token de acceso"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_api_access_token_validity:0
+#: field:payment.acquirer,mercadopago_api_access_token_validity:0
 msgid "Access Token Validity"
 msgstr "Validez del token de acceso"
 
 #. module: payment_MercadoPago
-#: model:ir.model,name:payment_MercadoPago.model_res_company
+#: model:ir.model,name:payment_mercadopago.model_res_company
 msgid "Companies"
 msgstr "Compañías"
 
 #. module: payment_MercadoPago
-#: view:account.config.settings:payment_MercadoPago.payment_MercadoPago_option_config
+#: view:account.config.settings:payment_mercadopago.payment_mercadopago_option_config
 msgid "Configure payment acquiring methods"
 msgstr "Configurar los métodos de pago"
 
 #. module: payment_MercadoPago
-#: model:ir.model,name:payment_MercadoPago.model_payment_acquirer
+#: model:ir.model,name:payment_mercadopago.model_payment_acquirer
 msgid "Payment Acquirer"
 msgstr "Método de pago"
 
 #. module: payment_MercadoPago
-#: model:ir.model,name:payment_MercadoPago.model_payment_transaction
+#: model:ir.model,name:payment_mercadopago.model_payment_transaction
 msgid "Payment Transaction"
 msgstr "Transacción de pago"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_email_account:0
+#: field:payment.acquirer,mercadopago_email_account:0
 msgid "MercadoPago Email ID"
 msgstr "Email ID de MercadoPago"
 
 #. module: payment_MercadoPago
-#: help:payment.acquirer,MercadoPago_use_ipn:0
+#: help:payment.acquirer,mercadoPago_use_ipn:0
 msgid "MercadoPago Instant Payment Notification"
 msgstr "Notificación de pago instantáneo de MercadoPago"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_seller_account:0
+#: field:payment.acquirer,mercadopago_seller_account:0
 msgid "MercadoPago Merchant ID"
 msgstr "ID de comerciante de MercadoPago"
 
 #. module: payment_MercadoPago
-#: view:payment.transaction:payment_MercadoPago.transaction_form_MercadoPago
+#: view:payment.transaction:payment_mercadopago.transaction_form_Mercadopago
 msgid "MercadoPago TX Details"
 msgstr "Detalles de transmisión de MercadoPago"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_api_password:0
+#: field:payment.acquirer,mercadopago_api_password:0
 msgid "Rest API Password"
 msgstr "Contraseña de la API Rest"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_api_username:0
+#: field:payment.acquirer,mercadopago_api_username:0
 msgid "Rest API Username"
 msgstr "Usuario de la API Rest"
 
 #. module: payment_MercadoPago
-#: help:payment.acquirer,MercadoPago_seller_account:0
+#: help:payment.acquirer,mercadopago_seller_account:0
 msgid ""
 "The Merchant ID is used to ensure communications coming from MercadoPago are "
 "valid and secured."
@@ -87,21 +87,21 @@ msgstr ""
 "provienen de MercadoPago son válidas y seguras."
 
 #. module: payment_MercadoPago
-#: field:payment.transaction,MercadoPago_txn_id:0
+#: field:payment.transaction,mercadopago_txn_id:0
 msgid "Transaction ID"
 msgstr "ID de la transacción"
 
 #. module: payment_MercadoPago
-#: field:payment.transaction,MercadoPago_txn_type:0
+#: field:payment.transaction,mercadopago_txn_type:0
 msgid "Transaction type"
 msgstr "Tipo de transacción"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_use_ipn:0
+#: field:payment.acquirer,mercadopago_use_ipn:0
 msgid "Use IPN"
 msgstr "Usar IPN"
 
 #. module: payment_MercadoPago
-#: field:payment.acquirer,MercadoPago_api_enabled:0
+#: field:payment.acquirer,mercadopago_api_enabled:0
 msgid "Use Rest API"
 msgstr "Usar API Rest"
