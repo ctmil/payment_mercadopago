@@ -3,8 +3,8 @@
 {
     'name': 'MercadoPago Payment Acquirer',
     'category': 'Hidden',
-    'summary': 'Payment Acquirer: MercadoPago Implementation',
-    'version': '1.0',
+    'summary': 'Payment Acquirer: MercadoPago Implementation for Odoo 8.0',
+    'version': '8.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive - www.moldeo.coop',
     'depends': ['payment'],
