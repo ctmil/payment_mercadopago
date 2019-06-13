@@ -7,7 +7,7 @@
     'version': '10.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
-    'depends': ['payment'],
+    'depends': ['payment', 'meli_oerp'],
     'data': [
         'views/mercadopago.xml',
         'views/payment_acquirer.xml',
