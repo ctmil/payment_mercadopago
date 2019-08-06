@@ -257,7 +257,7 @@ class AcquirerMercadopago(models.Model):
                 ,
                 "payer": {
 		            "name": tx_values.get("partner_name"),
-		            "surname": tx_values.get("partner_first_name"),
+		            #"surname": tx_values.get("partner_first_name"),
 		            "email": tx_values.get("partner_email"),
 #		            "date_created": "2015-01-29T11:51:49.570-04:00",
 		            "phone": {
@@ -571,7 +571,7 @@ class TxMercadoPago(models.Model):
                         'expire_month': cc_values['expiry_mm'],
                         'expire_year': cc_values['expiry_yy'],
                         'cvv2': cc_values['cvc'],
-                        'first_name': tx.partner_name,
+                        'first_name': '',
                         'last_name': tx.partner_name,
                         'billing_address': {
                             'line1': tx.partner_address,
