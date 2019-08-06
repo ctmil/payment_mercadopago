@@ -257,7 +257,7 @@ class AcquirerMercadopago(models.Model):
                 ,
                 "payer": {
 		            "name": tx_values.get("partner_name"),
-		            "surname": tx_values.get("partner_first_name"),
+		            #"surname": tx_values.get("partner_first_name"),
 		            "email": tx_values.get("partner_email"),
 #		            "date_created": "2015-01-29T11:51:49.570-04:00",
 		            "phone": {
