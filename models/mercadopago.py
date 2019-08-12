@@ -487,7 +487,7 @@ class TxMercadoPago(models.Model):
         }
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
-            data.update(state='done', date_validate=data.get('payment_date', fields.datetime.now()))
+            data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
             return self.write(data)
         elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
@@ -622,7 +622,7 @@ class TxMercadoPago(models.Model):
             _logger.info('Validated Mercadopago s2s payment for tx %s: set as done' % (tx.reference))
             tx.write({
                 'state': 'done',
-                'date_validate': values.get('udpate_time', fields.datetime.now()),
+                'date': values.get('udpate_time', fields.datetime.now()),
                 'mercadopago_txn_id': values['id'],
             })
             return True
