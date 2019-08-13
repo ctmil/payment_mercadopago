@@ -484,24 +484,20 @@ class TxMercadoPago(models.Model):
         }
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
-            data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
-            self._set_transaction_done()
+            data.update(state='done', date_validate=data.get('payment_date', fields.datetime.now()))
             return self.write(data)
         elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
             data.update(state='pending', state_message=data.get('pending_reason', ''))
-            self._set_transaction_pending()
             return self.write(data)
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (self.reference))
             data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            self._set_transaction_cancel()
             return self.write(data)
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (self.reference, status)
             _logger.info(error)
             data.update(state='error', state_message=error)
-            self._set_transaction_cancel()
             return self.write(data)
 
     # --------------------------------------------------
@@ -623,10 +619,9 @@ class TxMercadoPago(models.Model):
             _logger.info('Validated Mercadopago s2s payment for tx %s: set as done' % (tx.reference))
             tx.write({
                 'state': 'done',
-                'date': values.get('udpate_time', fields.datetime.now()),
+                'date_validate': values.get('udpate_time', fields.datetime.now()),
                 'mercadopago_txn_id': values['id'],
             })
-            self._set_transaction_done()
             return True
         elif status in ['pending', 'expired']:
             _logger.info('Received notification for MercadoPago s2s payment %s: set as pending' % (tx.reference))
@@ -635,7 +630,6 @@ class TxMercadoPago(models.Model):
                 # 'state_message': data.get('pending_reason', ''),
                 'mercadopago_txn_id': values['id'],
             })
-            self._set_transaction_pending()
             return True
         else:
             error = 'Received unrecognized status for MercadoPago s2s payment %s: %s, set as error' % (tx.reference, status)
@@ -645,7 +639,6 @@ class TxMercadoPago(models.Model):
                 # 'state_message': error,
                 'mercadopago_txn_id': values['id'],
             })
-            self._set_transaction_cancel()
             return False
 
     def _mercadopago_s2s_get_tx_status(self, tx, context=None):
