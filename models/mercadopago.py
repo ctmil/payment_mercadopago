@@ -483,7 +483,8 @@ class TxMercadoPago(models.Model):
         status = data.get('collection_status')
         data = {
             'acquirer_reference': data.get('external_reference'),
-            'mercadopago_txn_type': data.get('payment_type')
+            'mercadopago_txn_type': data.get('payment_type'),
+			#'mercadopago_txn_id': data.get('id')
         }
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
