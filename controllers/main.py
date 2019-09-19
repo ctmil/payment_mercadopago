@@ -26,7 +26,7 @@ class MercadoPagoController(http.Controller):
 #        if not return_url:
 #            custom = json.loads(post.pop('custom', False) or '{}')
 #            return_url = custom.get('return_url', '/')
-        return_url = ''
+        return_url = '/payment/process'
         return return_url
 
     def mercadopago_validate_data(self, **post):
@@ -81,7 +81,7 @@ class MercadoPagoController(http.Controller):
 #            _logger.warning('MercadoPago: unrecognized mercadopago answer, received %s instead of VERIFIED or INVALID' % resp.text)
         return res
 
-    @http.route('/payment/mercadopago/ipn/', type='http', auth='none')
+    @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
