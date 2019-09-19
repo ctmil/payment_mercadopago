@@ -26,7 +26,7 @@ class MercadoPagoController(http.Controller):
 #        if not return_url:
 #            custom = json.loads(post.pop('custom', False) or '{}')
 #            return_url = custom.get('return_url', '/')
-        return_url = ''
+        return_url = '/payment/process'
         return return_url
 
     def mercadopago_validate_data(self, **post):
