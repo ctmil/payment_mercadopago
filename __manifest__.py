@@ -7,6 +7,7 @@
     'version': '12.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
+    'website': 'http://www.moldeointeractive.com.ar',
     'depends': ['payment'],
     'data': [
         'views/mercadopago.xml',
