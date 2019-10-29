@@ -6,7 +6,8 @@
     'summary': 'Payment Acquirer: MercadoPago Implementation',
     'version': '9.0.0.0.0',
     'description': """MercadoPago Payment Acquirer""",
-    'author': 'Moldeo Interactive - www.moldeo.coop',
+    'author': 'Moldeo Interactive',
+    'website': 'http://www.moldeointeractive.com.ar',
     'depends': ['payment'],
     'data': [
         'views/mercadopago.xml',
