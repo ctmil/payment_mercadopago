@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 {
-    'name': 'MercadoPago Payment Acquirer',
+    'name': 'MercadoPago Payment Acquirer (Chile)',
     'category': 'Accounting',
-    'summary': 'Payment Acquirer: MercadoPago Implementation for Odoo version 12.0',
+    'summary': 'Payment Acquirer: MercadoPago Implementation for Odoo version 12.0 (Chile)',
     'version': '12.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
