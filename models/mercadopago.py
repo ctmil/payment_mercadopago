@@ -165,7 +165,7 @@ class AcquirerMercadopago(models.Model):
             path = path + "?" + urlencode(params)
         return path
 
-    @api.multi
+    
     def mercadopago_form_generate_values(self, values):
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
