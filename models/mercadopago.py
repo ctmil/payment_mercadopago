@@ -165,7 +165,7 @@ class AcquirerMercadopago(models.Model):
             path = path + "?" + urlencode(params)
         return path
 
-    
+
     def mercadopago_form_generate_values(self, values):
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
@@ -230,8 +230,10 @@ class AcquirerMercadopago(models.Model):
 
         if MPago:
 
-            if acquirer.environment=="prod":
+            if acquirer.state=="enabled":
                 MPago.sandbox_mode(False)
+            elif acquirer.state=="disabled":
+                return {}
             else:
                 MPago.sandbox_mode(True)
 
@@ -336,8 +338,10 @@ class AcquirerMercadopago(models.Model):
                 raise ValidationError(error_msg)
 
 
-            if acquirer.environment=="prod":
+            if acquirer.state=="enabled":
                 linkpay = preferenceResult['response']['init_point']
+            elif acquirer.state=="disabled":
+                return {}
             else:
                 linkpay = preferenceResult['response']['sandbox_init_point']
 
@@ -379,7 +383,8 @@ class AcquirerMercadopago(models.Model):
         return mercadopago_tx_values
 
     def mercadopago_get_form_action_url(self):
-        return self._get_mercadopago_urls( self.environment)['mercadopago_form_url']
+        environment = 'prod' if self.state == 'enabled' else 'test'
+        return self._get_mercadopago_urls(environment)['mercadopago_form_url']
 
     def _mercadopago_s2s_get_access_token(self, ids, context=None):
         """
@@ -391,7 +396,8 @@ class AcquirerMercadopago(models.Model):
         parameters = werkzeug.url_encode({'grant_type': 'client_credentials'})
 
         for acquirer in self.browse( ids, context=context):
-            tx_url = self._get_mercadopago_urls( acquirer.environment)['mercadopago_rest_url']
+            environment = 'prod' if acquirer.state == 'enabled' else 'test'
+            tx_url = self._get_mercadopago_urls( environment)['mercadopago_rest_url']
             request = urllib2.Request(tx_url, parameters)
 
             # add other headers (https://developer.paypal.com/webapps/developer/docs/integration/direct/make-your-first-call/)
