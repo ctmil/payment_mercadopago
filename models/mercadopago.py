@@ -402,6 +402,10 @@ class TxMercadoPago(models.Model):
     mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
     mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
 
+    def _get_pref_id_from_order( self, order_id ):
+
+        return ''
+
     def action_mercadopago_check_status( self ):
         _logger.info("action_mercadopago_check_status")
         for tx in self:
@@ -441,6 +445,31 @@ class TxMercadoPago(models.Model):
                     search_uri = '/v1/payments/search?'+'external_reference='+tx.acquirer_reference+'&access_token='+acquirer.mercadopago_api_access_token
                     payment_result = MPago.get( search_uri )
                     _logger.info(payment_result)
+                    if (payment_result and 'response' in payment_result):
+                        if ('results' in payment_result['response']):
+                            _results = payment_result['response']['results']
+                            _logger.info(_results)
+                            for result in _results:
+                                _logger.info(result)
+                                _status = result['status']
+                                if ('order' in result):
+                                    _order_id = result['order']['id']
+                                    _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                                    _logger.info(_order_uri)
+                                    merchant_order = MPago.get(_order_uri)
+                                    data = {}
+                                    data['collection_status'] = result['status']
+                                    data['external_reference'] = result['external_reference']
+                                    data['payment_type'] = result['payment_type_id']
+                                    data['id'] = result['id']
+                                    data['topic'] = 'payment'
+                                    if (merchant_order and 'preference_id' in merchant_order ):
+                                        data['pref_id'] = merchant_order['preference_id']
+                                    _logger.info(data)
+                                    tx._mercadopago_form_validate(dict(data))
+
+
+
 
 
         return ''
