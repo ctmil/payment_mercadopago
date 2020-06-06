@@ -36,8 +36,8 @@
             <field name="model">payment.transaction</field>
             <field name="inherit_id" ref="payment.transaction_form"/>
             <field name="arch" type="xml">
-              <xpath expr="//field[@name='button_box']/button" position="before">
-                <button type="object"                    
+              <xpath expr="//field[@name='button_box']" position="inside">
+                <button type="object"
                     name="action_mercadopago_check_status"
                     class="oe_stat_button">
                     <img src="/payment_mercadopago/static/src/img/mercadopago_logo.png" width="48" alt="logo mp"/>
