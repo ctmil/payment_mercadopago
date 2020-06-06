@@ -436,7 +436,7 @@ class TxMercadoPago(models.Model):
                         acquirer.mercadopago_api_access_token = MPagoToken
                     _logger.info("MPagoToken:"+str(acquirer.mercadopago_api_access_token))
 
-                    payment_result = MPago.search_payment( filters={ "external_reference": reference } )
+                    payment_result = MPago.search_payment( filters={ "external_reference": tx.acquirer_reference } )
                     _logger.info(payment_result)
 
 
