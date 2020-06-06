@@ -402,6 +402,41 @@ class TxMercadoPago(models.Model):
     mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
     mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
 
+    def action_mercadopago_check_status( self ):
+        _logger.info("action_mercadopago_check_status")
+        for tx in self:
+            _logger.info(tx)
+            _logger.info(tx.acquirer_reference)
+            acquirer = tx.acquirer_id
+            if (tx.acquirer_reference and acquirer):
+                MPago = False
+                MPagoPrefId = False
+
+                if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
+                    MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
+                    _logger.info( MPago )
+                else:
+                    error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
+                    _logger.error(error_msg)
+                    raise ValidationError(error_msg)
+
+                jsondump = ""
+
+                MPagoToken = False
+                if MPago:
+
+                    if acquirer.environment=="prod":
+                        MPago.sandbox_mode(False)
+                    else:
+                        MPago.sandbox_mode(True)
+
+                    MPagoToken = MPago.get_access_token()
+
+                    if (MPagoToken):
+                        self.mercadopago_api_access_token = MPagoToken
+                    _logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
+
+        return ''
 
     # --------------------------------------------------
     # FORM RELATED METHODS
