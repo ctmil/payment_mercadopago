@@ -10,6 +10,7 @@
                 <xpath expr='//group[@name="acquirer"]' position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'mercadopago')]}">
                         <group>
+                                <button type="action" name="mercadopago_auth"/>
                                 <field name="mercadopago_client_id"/>
                                 <field name="mercadopago_secret_key"/>
 
@@ -17,11 +18,13 @@
                                 <field name="mercadopago_seller_account"/>
                                 <field name="mercadopago_use_ipn"/>
                                 <field name="mercadopago_api_enabled"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
                                 <field name="mercadopago_api_username"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
                                 <field name="mercadopago_api_password"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
+                                <field name="mercadopago_api_access_token" invisible="0" />
+                                <field name="mercadopago_api_access_token_validity" invisible="0" />
                                 <!--<a colspan="2" href="https://github.com/ctmil/payment_mercadopago" target="_blank">How to configure your mercadopago account?</a>-->
                         </group>
                     </group>
@@ -37,6 +40,7 @@
               <xpath expr="//field[@name='acquirer_reference']" position="after">
                           <field name="mercadopago_txn_id"/>
                           <field name="mercadopago_txn_type"/>
+                          <field name="mercadopago_txn_preference_id/>
               </xpath>
             </field>
         </record>

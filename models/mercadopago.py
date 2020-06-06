@@ -172,37 +172,34 @@ class AcquirerMercadopago(models.Model):
         acquirer = self
 
         tx_values = dict(values)
-        #print "mercadopago_form_generate_values: tx_values: ", tx_values
-        #print "partner_values:", partner_values
-
+        _logger.info(tx_values)
         saleorder_obj = self.env['sale.order']
         saleorderline_obj = self.env['sale.order.line']
-        sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
+
+        topic = values.get('topic')
+        op_id = values.get('id')
+
+        reference = None
+        sorder_s = None
+        if (topi and op_id):
+            pass;
+        elif ("reference" in tx_values):
+            reference = tx_values["reference"]
+            sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
+
         shipments = ''
         amount = tx_values["amount"]
         melcatid = False
         if (sorder_s):
-            #print "sorder_s.name: ", sorder_s.name
-            #print "len(sorder_s.order_line): ", len(sorder_s.order_line)
-            #print "sorder_s.order_line[0]: ", sorder_s.order_line[0].name
             if (len(sorder_s.order_line)>0):
                 firstprod = sorder_s.order_line[0].product_id
-                #if ('meli_category' in firstprod._fields):
-                #    melcatid = firstprod.meli_category.meli_category_id
             if (melcatid):
                 for oline in  sorder_s.order_line:
-                    #print "oline: ", oline.name
-                    #print "oline.product_id: ", oline.product_id
-                    #print "oline.product_id.name ", oline.product_id.name
-                    #print "oline.product_id.name ", oline.product_id.
                     if (str(oline.product_id.name.encode("utf-8")) == str('MercadoEnvíos')):
-                        #print "oline category: ", melcatid
                         melcatidrequest = 'https://api.mercadolibre.com/categories/'+str(melcatid)+'/shipping'
                         headers = {'Accept': 'application/json', 'Content-type':'application/json'}
                         uri = self.make_path(melcatidrequest)
-                        #print "oline melcatidrequest: ", melcatidrequest
                         response = requests.get(uri, params='', headers=headers)
-                        #print "oline melcatidrequest RESPONSE: ", str(response.content)
                         if response.status_code == requests.codes.ok:
                             rdims = response.json()
                             dims = str(rdims["height"])+str("x")+str(rdims["width"])+str("x")+str(rdims["length"])+str(",")+str(rdims["weight"])
@@ -212,7 +209,6 @@ class AcquirerMercadopago(models.Model):
                                 "dimensions": dims,
                                 "zip_code": tx_values.get("partner_zip"),
                             }
-                        #print "oline shipments: ", shipments
 
         MPago = False
         MPagoPrefId = False
@@ -220,7 +216,6 @@ class AcquirerMercadopago(models.Model):
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
             _logger.info( MPago )
-            #print "MPago:", MPago
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -228,6 +223,7 @@ class AcquirerMercadopago(models.Model):
 
         jsondump = ""
 
+        MPagoToken = False
         if MPago:
 
             if acquirer.state=="enabled":
@@ -239,16 +235,26 @@ class AcquirerMercadopago(models.Model):
 
             MPagoToken = MPago.get_access_token()
 
+            if (MPagoToken):
+                self.mercadopago_api_access_token = MPagoToken
+            _logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
+
             #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
             #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
             #request
 
             #{ "category_id": "MLA371926", "height": 30, "width": 30, "length": 30, "weight": 650 }
 
+        mercadopago_tx_values = dict(tx_values)
+
+        if (not MPagoToken):
+            return mercadopago_tx_values
+
+        if (reference):
             preference = {
                 "items": [
                 {
-                    "title": "Orden Ecommerce "+ tx_values["reference"] ,
+                    "title": "Orden Ecommerce "+ tx_values["reference"],
                     #"picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
                     "quantity": 1,
                     "currency_id":  tx_values['currency'] and tx_values['currency'].name or '',
@@ -347,39 +353,15 @@ class AcquirerMercadopago(models.Model):
 
             jsondump = json.dumps( preferenceResult, indent=2 )
 
-            #print "linkpay:", linkpay
-            #print "jsondump:", jsondump
-            #print "MPagoPrefId: ", MPagoPrefId
-            #print "MPagoToken: ", MPagoToken
+        if (not reference):
+            payment_info = MPago.get_payment(op_id)
 
-
-        mercadopago_tx_values = dict(tx_values)
         if MPagoPrefId:
             mercadopago_tx_values.update({
-            'pref_id': MPagoPrefId,
-#            'cmd': '_xclick',
-#            'business': acquirer.mercadopago_email_account,
-#            'item_name': tx_values['reference'],
-#            'item_number': tx_values['reference'],
-#            'amount': tx_values['amount'],
-#            'currency_code': tx_values['currency'] and tx_values['currency'].name or '',
-#            'address1': partner_values['address'],
-#            'city': partner_values['city'],
-#            'country': partner_values['country'] and partner_values['country'].name or '',
-#            'state': partner_values['state'] and partner_values['state'].name or '',
-#            'email': partner_values['email'],
-#            'zip': partner_values['zip'],
-#            'first_name': partner_values['first_name'],
-#            'last_name': partner_values['last_name'],
-#            'return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._return_url),
-#            'notify_url': '%s' % urlparse.urljoin(base_url, MercadoPagoController._notify_url),
-#            'cancel_return': '%s' % urlparse.urljoin(base_url, MercadoPagoController._cancel_url),
+                'pref_id': MPagoPrefId,
             })
 
-#        if acquirer.fees_active:
-#            mercadopago_tx_values['handling'] = '%.2f' % mercadopago_tx_values.pop('fees', 0.0)
-#        if mercadopago_tx_values.get('return_url'):
-#            mercadopago_tx_values['custom'] = json.dumps({'return_url': '%s' % mercadopago_tx_values.pop('return_url')})
+        _logger.info(mercadopago_tx_values)
         return mercadopago_tx_values
 
     def mercadopago_get_form_action_url(self):
@@ -421,8 +403,9 @@ class AcquirerMercadopago(models.Model):
 class TxMercadoPago(models.Model):
     _inherit = 'payment.transaction'
 
-    mercadopago_txn_id = fields.Char('Transaction ID')
-    mercadopago_txn_type = fields.Char('Transaction type')
+    mercadopago_txn_id = fields.Char('Transaction ID', index=True)
+    mercadopago_txn_type = fields.Char('Transaction type', index=True)
+    mercadopago_txn_preference_id = field.Char(string='Mercadopago Preference id', index=True)
 
 
     # --------------------------------------------------
@@ -487,11 +470,21 @@ class TxMercadoPago(models.Model):
     #called by Trans.form_feedback(...) > %s_form_validate(...)
     def _mercadopago_form_validate(self, data):
         status = data.get('collection_status')
+        topic = data.get('topic')
+        payment_id = data.get('id')
+        pref_id = data.get('pref_id')
+
         data = {
             'acquirer_reference': data.get('external_reference'),
-            'mercadopago_txn_type': data.get('payment_type'),
-			#'mercadopago_txn_id': data.get('id')
+            'mercadopago_txn_type': data.get('payment_type')
         }
+
+        if (topic in ["payment"] and payment_id):
+			data['mercadopago_txn_id'] = str(payment_id)
+
+        if (pref_id):
+            data['mercadopago_txn_preference_id'] = str(pref_id)
+
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
