@@ -82,14 +82,14 @@ class MercadoPagoController(http.Controller):
         return res
 
     @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
-    def mercadopago_ipn(self, **post, **kwargs=None):
+    def mercadopago_ipn(self, **kwargs):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
         #segun el topic:
         # luego se consulta con el "id"
-        _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
+        #_logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
         _logger.info('Beginning MercadoPago IPN form_feedback with kwargs data %s', pprint.pformat(kwargs))  # debug
-        self.mercadopago_validate_data(**post)
+        self.mercadopago_validate_data(**kwargs)
         return ''
 
     @http.route('/payment/mercadopago/dpn', type='http', auth="none")
