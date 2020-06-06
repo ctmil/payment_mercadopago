@@ -14,6 +14,7 @@ from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
+from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
 class MercadoPagoController(http.Controller):
     _notify_url = '/payment/mercadopago/ipn/'
@@ -54,13 +55,12 @@ class MercadoPagoController(http.Controller):
             tx = request.env['payment.transaction'].search( [('reference', '=', reference)])
             _logger.info('mercadopago_validate_data() > payment.transaction: %s' % tx)
 
-
         _logger.info('MercadoPago: validating data')
         #print "new_post:", new_post
         _logger.info('MercadoPago: %s' % post)
 
 
-        if tx:
+        if (tx or (topic and str(topic) in ["payment"] and op_id):
             _logger.info('MercadoPago: ')
             res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
@@ -82,12 +82,13 @@ class MercadoPagoController(http.Controller):
         return res
 
     @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
-    def mercadopago_ipn(self, **post):
+    def mercadopago_ipn(self, **post, **kwargs=None):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
         #segun el topic:
         # luego se consulta con el "id"
         _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
+        _logger.info('Beginning MercadoPago IPN form_feedback with kwargs data %s', pprint.pformat(kwargs))  # debug
         self.mercadopago_validate_data(**post)
         return ''
 
