@@ -474,7 +474,7 @@ class TxMercadoPago(models.Model):
         }
 
         if (topic in ["payment"] and payment_id):
-			data['mercadopago_txn_id'] = str(payment_id)
+            data['mercadopago_txn_id'] = str(payment_id)
 
         if (pref_id):
             data['mercadopago_txn_preference_id'] = str(pref_id)
