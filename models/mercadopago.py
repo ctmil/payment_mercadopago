@@ -399,7 +399,8 @@ class TxMercadoPago(models.Model):
 
     mercadopago_txn_id = fields.Char('Transaction ID', index=True)
     mercadopago_txn_type = fields.Char('Transaction type', index=True)
-    mercadopago_txn_preference_id = field.Char(string='Mercadopago Preference id', index=True)
+    mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
+    mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
 
 
     # --------------------------------------------------

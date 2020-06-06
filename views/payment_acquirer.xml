@@ -39,7 +39,8 @@
               <xpath expr="//field[@name='acquirer_reference']" position="after">
                           <field name="mercadopago_txn_id"/>
                           <field name="mercadopago_txn_type"/>
-                          <field name="mercadopago_txn_preference_id/>
+                          <field name="mercadopago_txn_preference_id" invisible="0"/>
+                          <field name="mercadopago_txn_merchant_order_id" invisible="0"/>
               </xpath>
             </field>
         </record>
