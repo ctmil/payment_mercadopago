@@ -60,7 +60,7 @@ class MercadoPagoController(http.Controller):
         _logger.info('MercadoPago: %s' % post)
 
 
-        if (tx or (topic and str(topic) in ["payment"] and op_id):
+        if ( tx or (topic and str(topic) in ["payment"] and op_id) ):
             _logger.info('MercadoPago: ')
             res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
