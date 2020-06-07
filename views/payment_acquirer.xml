@@ -40,7 +40,7 @@
                 <button type="object"
                     name="action_mercadopago_check_status"
                     class="oe_stat_button">
-                    <img src="/payment_mercadopago/static/src/img/mercadopago_logo.png" width="48" alt="logo mp"/>
+                    <img src="/payment_mercadopago/static/src/img/mercadopago_logo_64.png" width="48" alt="logo mp"/>
                     <span>Actualizar estado</span>
                     <!-- attrs="{'invisible':[('state', '!=', 'active')] }" -->
                 </button>

@@ -16,6 +16,7 @@
         'data/mercadopago.xml',
     ],
     'images': ['src/img/mercadopago_icon.png','src/img/mercadopago_logo.png',
+                'src/img/mercadopago_logo_64.png',
                 'static/description/payment_mercadopago_screenshot.png','static/description/main_screenshot.png',
                 'static/description/main2_screenshot.png',
                 'static/description/create_application_mp_sreenshot.png','static/description/credentials_mercadopago_screenshot.png'],
