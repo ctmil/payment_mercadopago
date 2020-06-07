@@ -501,11 +501,11 @@ class TxMercadoPago(models.Model):
             try:
                 data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
                 tx._mercadopago_form_validate(dict(data))
-            except Exception as E:
+            except Exception as e:
                 error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
                 error_msg+= '\n'+'or Transaction was cancelled.'
-                #error_msg+= E
-                raise ValidationError(error_msg)
+                _logger.error(e, exc_info=True)
+                raise ValidationError(e)
 
         return data
 
