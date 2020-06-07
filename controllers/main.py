@@ -63,7 +63,7 @@ class MercadoPagoController(http.Controller):
         if (not reference and (topic and str(topic) in ["payment"] and op_id) ):
             _logger.info('MercadoPago topic:'+str(topic))
             _logger.info('MercadoPago payment id to search:'+str(op_id))
-            reference = request.env["payment.acquirer"].mercadopago_get_reference(payment_id=op_id)
+            reference = request.env["payment.acquirer"].sudo().mercadopago_get_reference(payment_id=op_id)
 
         tx = None
         if reference:
