@@ -181,7 +181,7 @@ class AcquirerMercadopago(models.Model):
 
         reference = None
         sorder_s = None
-        if (topi and op_id):
+        if (topic and op_id):
             pass;
         elif ("reference" in tx_values):
             reference = tx_values["reference"]
@@ -412,6 +412,7 @@ class TxMercadoPago(models.Model):
             _logger.info(tx)
             _logger.info(tx.acquirer_reference)
             acquirer = tx.acquirer_id
+
             if (tx.acquirer_reference and acquirer and tx.state not in ["donex","cancel"]):
                 MPago = False
                 MPagoPrefId = False
@@ -469,8 +470,9 @@ class TxMercadoPago(models.Model):
                                         data['pref_id'] = merchant_order['response']['preference_id']
                                     _logger.info(data)
                                     tx._mercadopago_form_validate(dict(data))
-
-
+            else:
+                error_msg = 'acquirer_reference not found or Payment already cancel'
+                raise ValidationError(error_msg)
 
 
 
