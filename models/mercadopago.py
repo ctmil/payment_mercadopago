@@ -393,30 +393,22 @@ class AcquirerMercadopago(models.Model):
             request.close()
         return res
 
+    @api.model
+    def mercadopago_get_reference(self, payment_id=None ):
+        reference = None
+        if (not payment_id):
+            return reference
+        mps = self.search([('provider','=','mercadopago'),('mercadopago_client_id','!=',False),('mercadopago_secret_key','!=',False)])
+        for mp in mps:
+            data = mp._mercadopago_get_data(payment_id=payment_id)
+            if (data and ('external_reference' in data) ):
+                return data['external_reference']
+        return reference
 
-class TxMercadoPago(models.Model):
-    _inherit = 'payment.transaction'
 
-    mercadopago_txn_id = fields.Char('Transaction ID', index=True)
-    mercadopago_txn_type = fields.Char('Transaction type', index=True)
-    mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
-    mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
-
-    def _get_provider(self):
-        for tx in self:
-            tx.mercadopago_txn_provider = tx.acquirer_id.provider
-
-    mercadopago_txn_provider = fields.Char(string="Provider",compute=_get_provider )
-
-    def _get_pref_id_from_order( self, order_id ):
-
-        return ''
-
-    def _mercadopago_get_data( self, payment_id=None ):
-        data = {}
-        tx = self
-        acquirer = tx.acquirer_id
-        if ( (tx.acquirer_reference or payment_id) and acquirer and tx.state not in ["donex","cancel"]):
+    def _mercadopago_get_data(self, payment_id=None, reference=None ):
+        data = None
+        for acquirer in self:
             MPago = False
             MPagoPrefId = False
 
@@ -426,13 +418,12 @@ class TxMercadoPago(models.Model):
             else:
                 error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
                 _logger.error(error_msg)
-                raise ValidationError(error_msg)
+                #raise ValidationError(error_msg)
 
             jsondump = ""
 
             MPagoToken = False
             if MPago:
-
                 if acquirer.environment=="prod":
                     MPago.sandbox_mode(False)
                 else:
@@ -445,8 +436,8 @@ class TxMercadoPago(models.Model):
                 #_logger.info("MPagoToken:"+str(acquirer.mercadopago_api_access_token))
                 #payment_result = MPago.search_payment( _filters )
                 search_uri = ''
-                if (tx.acquirer_reference):
-                    search_uri = '/v1/payments/search?'+'external_reference='+tx.acquirer_reference+'&access_token='+acquirer.mercadopago_api_access_token
+                if (reference):
+                    search_uri = '/v1/payments/search?'+'external_reference='+reference+'&access_token='+acquirer.mercadopago_api_access_token
                 else:
                     search_uri = '/v1/payments/'+str(payment_id)+'?access_token='+acquirer.mercadopago_api_access_token
                 _logger.info(search_uri)
@@ -475,8 +466,27 @@ class TxMercadoPago(models.Model):
                                 if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
                                     data['pref_id'] = merchant_order['response']['preference_id']
                                 _logger.info(data)
-
+                                return data
         return data
+
+
+class TxMercadoPago(models.Model):
+    _inherit = 'payment.transaction'
+
+    mercadopago_txn_id = fields.Char('Transaction ID', index=True)
+    mercadopago_txn_type = fields.Char('Transaction type', index=True)
+    mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
+    mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
+
+    def _get_provider(self):
+        for tx in self:
+            tx.mercadopago_txn_provider = tx.acquirer_id.provider
+
+    mercadopago_txn_provider = fields.Char(string="Provider",compute=_get_provider )
+
+    def _get_pref_id_from_order( self, order_id ):
+
+        return ''
 
     def action_mercadopago_check_status( self ):
         data = {}
@@ -489,7 +499,7 @@ class TxMercadoPago(models.Model):
                 tx.acquirer_reference = tx.reference
 
             try:
-                data = tx._mercadopago_get_data()
+                data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
                 tx._mercadopago_form_validate(dict(data))
             except Exception as E:
                 error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
@@ -565,7 +575,7 @@ class TxMercadoPago(models.Model):
         payment_id = data.get('id')
         if (topic in ["payment"] and payment_id):
             data['mercadopago_txn_id'] = str(payment_id)
-            data.update(self._mercadopago_get_data(payment_id))
+            data.update( self._mercadopago_get_data(payment_id) )
 
         #DPN style
         status = data.get('collection_status')
