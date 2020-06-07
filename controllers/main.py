@@ -61,7 +61,10 @@ class MercadoPagoController(http.Controller):
 
 
         if ( tx or (topic and str(topic) in ["payment"] and op_id) ):
-            _logger.info('MercadoPago: ')
+            if (topic):
+                _logger.info('MercadoPago topic:'+str(topic))
+            if (op_id):
+                _logger.info('MercadoPago payment id:'+str(op_id))
             res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
 #        https://api.mercadolibre.com/collections/?access_token=
@@ -81,7 +84,7 @@ class MercadoPagoController(http.Controller):
 #            _logger.warning('MercadoPago: unrecognized mercadopago answer, received %s instead of VERIFIED or INVALID' % resp.text)
         return res
 
-    @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
+    @http.route('/payment/mercadopago/ipn/', type='http', auth='none')
     def mercadopago_ipn(self, **kwargs):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
