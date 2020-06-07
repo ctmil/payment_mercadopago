@@ -97,15 +97,9 @@ class MercadoPagoController(http.Controller):
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
-        #segun el topic:
-        # luego se consulta con el "id"
-        #_logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
+        #segun el topic: # luego se consulta con el "id"
         _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
-        _logger.info("request.httprequest.url:"+str(request.httprequest.url))
-        _logger.info("request.httprequest.query_string:"+str(request.httprequest.query_string))
-
         querys = parse.urlsplit(request.httprequest.url).query
-        _logger.info("parse.urlsplit(request.httprequest.url).query:"+str(querys))
         params = dict(parse.parse_qsl(querys))
         _logger.info(params)
         if (params and 'topic' in params and 'id' in params):
