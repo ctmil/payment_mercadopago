@@ -215,7 +215,7 @@ class AcquirerMercadopago(models.Model):
 
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
-            _logger.info( MPago )
+            #_logger.info( MPago )
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -235,7 +235,7 @@ class AcquirerMercadopago(models.Model):
 
             if (MPagoToken):
                 self.mercadopago_api_access_token = MPagoToken
-            _logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
+            #_logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
 
             #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
             #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
@@ -414,7 +414,7 @@ class AcquirerMercadopago(models.Model):
 
             if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
                 MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
-                _logger.info( MPago )
+                #_logger.info( MPago )
             else:
                 error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
                 _logger.error(error_msg)
@@ -440,25 +440,25 @@ class AcquirerMercadopago(models.Model):
                     search_uri = '/v1/payments/search?'+'external_reference='+reference+'&access_token='+acquirer.mercadopago_api_access_token
                 else:
                     search_uri = '/v1/payments/'+str(payment_id)+'?access_token='+acquirer.mercadopago_api_access_token
-                _logger.info(search_uri)
+                #_logger.info(search_uri)
                 payment_result = MPago.get( search_uri )
-                _logger.info(payment_result)
+                #_logger.info(payment_result)
                 if (payment_result and 'response' in payment_result):
                     _results = []
                     if ('results' in payment_result['response']):
                         _results = payment_result['response']['results']
                     else:
                         _results.append( payment_result['response'] )
-                    _logger.info(_results)
+                    #_logger.info(_results)
                     for result in _results:
                         _logger.info(result)
                         _status = result['status']
                         if ('order' in result):
                             _order_id = result['order']['id']
                             _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
-                            _logger.info(_order_uri)
+                            #_logger.info(_order_uri)
                             merchant_order = MPago.get(_order_uri)
-                            _logger.info(merchant_order)
+                            #_logger.info(merchant_order)
                             data = {}
                             data['collection_status'] = result['status']
                             data['external_reference'] = result['external_reference']
@@ -468,7 +468,7 @@ class AcquirerMercadopago(models.Model):
                             data['merchant_order_id'] = _order_id
                             if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
                                 data['pref_id'] = merchant_order['response']['preference_id']
-                            _logger.info(data)
+                            #_logger.info(data)
                             return data
         return data
 
@@ -503,7 +503,7 @@ class TxMercadoPago(models.Model):
 
             try:
                 data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
-                _logger.info(data)
+                #_logger.info(data)
                 if (data):
                     tx._mercadopago_form_validate(dict(data))
             except Exception as e:
