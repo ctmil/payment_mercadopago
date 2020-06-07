@@ -6,7 +6,16 @@ except ImportError:
     import json
 import logging
 import pprint
+
 from urllib.request import urlopen
+
+try:
+    #python2
+    import urlparse as parse
+except ImportError:
+    #python3
+    from urllib import parse
+
 import werkzeug
 
 from odoo import http, SUPERUSER_ID
@@ -91,10 +100,17 @@ class MercadoPagoController(http.Controller):
         #segun el topic:
         # luego se consulta con el "id"
         #_logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
+        _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
         _logger.info("request.httprequest.url:"+str(request.httprequest.url))
         _logger.info("request.httprequest.query_string:"+str(request.httprequest.query_string))
-        _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
-        self.mercadopago_validate_data(**post)
+
+        querys = parse.urlsplit(request.httprequest.url).query
+        _logger.info("parse.urlsplit(request.httprequest.url).query:"+str(querys))
+        params = dict(parse.parse_qsl(querys))
+        if (params and 'topic' in params and 'id' in 'topic'):
+            self.mercadopago_validate_data( params )
+        else:
+            self.mercadopago_validate_data(**post)
         return ''
 
     @http.route('/payment/mercadopago/dpn', type='http', auth="none")
