@@ -444,29 +444,32 @@ class AcquirerMercadopago(models.Model):
                 payment_result = MPago.get( search_uri )
                 _logger.info(payment_result)
                 if (payment_result and 'response' in payment_result):
+                    _results = []
                     if ('results' in payment_result['response']):
                         _results = payment_result['response']['results']
-                        _logger.info(_results)
-                        for result in _results:
-                            _logger.info(result)
-                            _status = result['status']
-                            if ('order' in result):
-                                _order_id = result['order']['id']
-                                _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
-                                _logger.info(_order_uri)
-                                merchant_order = MPago.get(_order_uri)
-                                _logger.info(merchant_order)
-                                data = {}
-                                data['collection_status'] = result['status']
-                                data['external_reference'] = result['external_reference']
-                                data['payment_type'] = result['payment_type_id']
-                                data['id'] = result['id']
-                                data['topic'] = 'payment'
-                                data['merchant_order_id'] = _order_id
-                                if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
-                                    data['pref_id'] = merchant_order['response']['preference_id']
-                                _logger.info(data)
-                                return data
+                    else:
+                        _results.append( payment_result['response'] )
+                    _logger.info(_results)
+                    for result in _results:
+                        _logger.info(result)
+                        _status = result['status']
+                        if ('order' in result):
+                            _order_id = result['order']['id']
+                            _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                            _logger.info(_order_uri)
+                            merchant_order = MPago.get(_order_uri)
+                            _logger.info(merchant_order)
+                            data = {}
+                            data['collection_status'] = result['status']
+                            data['external_reference'] = result['external_reference']
+                            data['payment_type'] = result['payment_type_id']
+                            data['id'] = result['id']
+                            data['topic'] = 'payment'
+                            data['merchant_order_id'] = _order_id
+                            if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
+                                data['pref_id'] = merchant_order['response']['preference_id']
+                            _logger.info(data)
+                            return data
         return data
 
 
