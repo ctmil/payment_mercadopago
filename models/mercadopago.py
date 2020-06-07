@@ -401,6 +401,11 @@ class TxMercadoPago(models.Model):
     mercadopago_txn_type = fields.Char('Transaction type', index=True)
     mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
     mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
+    mercadopago_txn_provider = fields.Char(string="Provider",compute=_get_provider )
+
+    def _get_provider(self):
+        for tx in self:
+            tx.mercadopago_txn_provider = tx.acquirer_id.provider
 
     def _get_pref_id_from_order( self, order_id ):
 
