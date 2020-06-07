@@ -107,7 +107,8 @@ class MercadoPagoController(http.Controller):
         querys = parse.urlsplit(request.httprequest.url).query
         _logger.info("parse.urlsplit(request.httprequest.url).query:"+str(querys))
         params = dict(parse.parse_qsl(querys))
-        if (params and 'topic' in params and 'id' in 'topic'):
+        _logger.info(params)
+        if (params and 'topic' in params and 'id' in params):
             self.mercadopago_validate_data( params )
         else:
             self.mercadopago_validate_data(**post)
