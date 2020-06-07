@@ -573,9 +573,9 @@ class TxMercadoPago(models.Model):
         #IPN style
         topic = data.get('topic')
         payment_id = data.get('id')
-        if (topic in ["payment"] and payment_id):
+        if (topic in ["payment"] and payment_id and self.acquirer_id):
             data['mercadopago_txn_id'] = str(payment_id)
-            data.update( self._mercadopago_get_data(payment_id) )
+            data.update( self.acquirer_id._mercadopago_get_data(payment_id) )
 
         #DPN style
         status = data.get('collection_status')
