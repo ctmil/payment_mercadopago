@@ -412,11 +412,11 @@ class TxMercadoPago(models.Model):
 
         return ''
 
-    def _mercadopago_get_data( self ):
+    def _mercadopago_get_data( self, payment_id=None ):
         data = {}
         tx = self
         acquirer = tx.acquirer_id
-        if (tx.acquirer_reference and acquirer and tx.state not in ["donex","cancel"]):
+        if ( (tx.acquirer_reference or payment_id) and acquirer and tx.state not in ["donex","cancel"]):
             MPago = False
             MPagoPrefId = False
 
@@ -442,11 +442,14 @@ class TxMercadoPago(models.Model):
 
                 if (MPagoToken):
                     acquirer.mercadopago_api_access_token = MPagoToken
-                _logger.info("MPagoToken:"+str(acquirer.mercadopago_api_access_token))
-                _filters = { "external_reference": tx.acquirer_reference }
-                _logger.info(_filters)
+                #_logger.info("MPagoToken:"+str(acquirer.mercadopago_api_access_token))
                 #payment_result = MPago.search_payment( _filters )
-                search_uri = '/v1/payments/search?'+'external_reference='+tx.acquirer_reference+'&access_token='+acquirer.mercadopago_api_access_token
+                search_uri = ''
+                if (tx.acquirer_reference):
+                    search_uri = '/v1/payments/search?'+'external_reference='+tx.acquirer_reference+'&access_token='+acquirer.mercadopago_api_access_token
+                else:
+                    search_uri = '/v1/payments/'+str(payment_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                _logger.info(search_uri)
                 payment_result = MPago.get( search_uri )
                 _logger.info(payment_result)
                 if (payment_result and 'response' in payment_result):
