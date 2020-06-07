@@ -17,11 +17,13 @@
                                 <field name="mercadopago_seller_account"/>
                                 <field name="mercadopago_use_ipn"/>
                                 <field name="mercadopago_api_enabled"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
                                 <field name="mercadopago_api_username"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
                                 <field name="mercadopago_api_password"
-                                    invisible="1"/> <!-- WIP in saas-3 -->
+                                    invisible="0"/> <!-- WIP in saas-3 -->
+                                <field name="mercadopago_api_access_token" invisible="0" />
+                                <field name="mercadopago_api_access_token_validity" invisible="0" />
                                 <!--<a colspan="2" href="https://github.com/ctmil/payment_mercadopago" target="_blank">How to configure your mercadopago account?</a>-->
                         </group>
                     </group>
@@ -34,9 +36,21 @@
             <field name="model">payment.transaction</field>
             <field name="inherit_id" ref="payment.transaction_form"/>
             <field name="arch" type="xml">
+              <xpath expr="//div[@name='button_box']" position="inside">
+                  <button type="object"
+                    attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"
+                    name="action_mercadopago_check_status"
+                    class="oe_stat_button">
+                    <img src="/payment_mercadopago/static/src/img/mercadopago_logo_64.png" width="32" alt="logo mp"/>
+                    <span>Actualizar estado</span>
+                  </button>
+              </xpath>
               <xpath expr="//field[@name='acquirer_reference']" position="after">
-                          <field name="mercadopago_txn_id"/>
-                          <field name="mercadopago_txn_type"/>
+                      <field name="mercadopago_txn_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"/>
+                      <field name="mercadopago_txn_type" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"/>
+                      <field name="mercadopago_txn_preference_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"/>
+                      <field name="mercadopago_txn_merchant_order_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"/>
+                      <field name="mercadopago_txn_provider" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago')] }"/>
               </xpath>
             </field>
         </record>
