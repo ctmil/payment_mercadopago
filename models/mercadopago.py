@@ -482,12 +482,19 @@ class TxMercadoPago(models.Model):
         data = {}
         _logger.info("action_mercadopago_check_status")
         for tx in self:
+            acquirer_reference = tx.reference
             if (tx.acquirer_reference):
+                acquirer_reference = tx.acquirer_reference
+            else:
+                tx.acquirer_reference = tx.reference
+
+            try:
                 data = tx._mercadopago_get_data()
                 tx._mercadopago_form_validate(dict(data))
-            else:
+            except Exception as E:
                 error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
                 error_msg+= '\n'+'or Transaction was cancelled.'
+                #error_msg+= E
                 raise ValidationError(error_msg)
 
         return data
