@@ -464,6 +464,7 @@ class TxMercadoPago(models.Model):
                                     data['payment_type'] = result['payment_type_id']
                                     data['id'] = result['id']
                                     data['topic'] = 'payment'
+                                    data['merchant_order_id'] = _order_id
                                     if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
                                         data['pref_id'] = merchant_order['response']['preference_id']
                                     _logger.info(data)
@@ -540,11 +541,15 @@ class TxMercadoPago(models.Model):
         topic = data.get('topic')
         payment_id = data.get('id')
         pref_id = data.get('pref_id')
+        merchant_order_id = data.get('merchant_order_id')
 
         data = {
             'acquirer_reference': data.get('external_reference'),
             'mercadopago_txn_type': data.get('payment_type')
         }
+
+        if (merchant_order_id):
+            data["mercadopago_txn_merchant_order_id"] = merchant_order_id
 
         if (topic in ["payment"] and payment_id):
             data['mercadopago_txn_id'] = str(payment_id)
