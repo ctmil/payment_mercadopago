@@ -500,7 +500,9 @@ class TxMercadoPago(models.Model):
 
             try:
                 data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
-                tx._mercadopago_form_validate(dict(data))
+                _logger.info(data)
+                if (data):
+                    tx._mercadopago_form_validate(dict(data))
             except Exception as e:
                 error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
                 error_msg+= '\n'+'or Transaction was cancelled.'
@@ -575,6 +577,8 @@ class TxMercadoPago(models.Model):
         payment_id = data.get('id')
         if (topic in ["payment"] and payment_id and self.acquirer_id):
             data['mercadopago_txn_id'] = str(payment_id)
+            _logger.info(data)
+            _logger.info(self.acquirer_id)
             data.update( self.acquirer_id._mercadopago_get_data(payment_id=payment_id) )
 
         #DPN style
