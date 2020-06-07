@@ -576,24 +576,30 @@ class TxMercadoPago(models.Model):
     #called by Trans.form_feedback(...) > %s_form_validate(...)
     def _mercadopago_form_validate(self, data):
         #IPN style
-        topic = data.get('topic')
-        payment_id = data.get('id')
-        if (topic in ["payment"] and payment_id and self.acquirer_id):
-            data['mercadopago_txn_id'] = str(payment_id)
-            _logger.info(data)
-            _logger.info(self.acquirer_id)
-            data.update( self.acquirer_id._mercadopago_get_data(payment_id=payment_id) )
-
+        f_data = data
+        topic = f_data.get('topic')
+        payment_id = f_data.get('id')
         #DPN style
-        status = data.get('collection_status')
-        payment_type = data.get('payment_type')
-        external_reference = data.get('external_reference')
-        pref_id = data.get('pref_id')
-        merchant_order_id = data.get('merchant_order_id')
+        external_reference = f_data.get('external_reference')
 
-        _logger.info("_mercadopago_form_validate")
-        _logger.info(data)
+        if (topic in ["payment"] and payment_id and self.acquirer_id):
+            #IPN based on payment id, preferred...
+            f_data.update( self.acquirer_id._mercadopago_get_data(payment_id=payment_id) )
+            external_reference = f_data.get('external_reference')
+        elif (external_reference):
+            #DPN based on payment id, preferred...
+            f_data.update( self.acquirer_id._mercadopago_get_data(reference=external_reference) )
+            payment_id = f_data.get('id')
 
+        #REST OF THE FIELDS:
+        status = f_data.get('collection_status')
+        payment_type = f_data.get('payment_type')
+        pref_id = f_data.get('pref_id')
+        merchant_order_id = f_data.get('merchant_order_id')
+
+        _logger.info("_mercadopago_form_validate: external_reference: " +str(external_reference))
+
+        #BUILD data to write into Transaction fields
         data = {}
         if (payment_type and external_reference):
             data.update({
@@ -606,8 +612,12 @@ class TxMercadoPago(models.Model):
 
         if (pref_id):
             data['mercadopago_txn_preference_id'] = str(pref_id)
-        _logger.info("Final data:")
-        _logger.info(data)
+
+        if (payment_id):
+            data['mercadopago_txn_id'] = str(payment_id)
+
+        #_logger.info("Final data:")
+        #_logger.info(data)
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             if (self.state not in ['done']):
