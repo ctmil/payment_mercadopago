@@ -37,7 +37,7 @@
             <field name="inherit_id" ref="payment.transaction_form"/>
             <field name="arch" type="xml">
               <xpath expr="//div[@name='button_box']" position="inside">
-                <t t-if="acquirer_reference and reference">
+                <t t-if="acquirer_reference and reference and acquirer_id and acquirer_id.provider in ['mercadopago','mercadopago_ar'] ">
                   <button type="object"
                     name="action_mercadopago_check_status"
                     class="oe_stat_button">
@@ -49,10 +49,12 @@
 
               </xpath>
               <xpath expr="//field[@name='acquirer_reference']" position="after">
+                      <t t-if="acquirer_reference and reference and acquirer_id and acquirer_id.provider in ['mercadopago','mercadopago_ar'] ">
                           <field name="mercadopago_txn_id"/>
                           <field name="mercadopago_txn_type"/>
                           <field name="mercadopago_txn_preference_id" invisible="0"/>
                           <field name="mercadopago_txn_merchant_order_id" invisible="0"/>
+                      </t>
               </xpath>
             </field>
         </record>
