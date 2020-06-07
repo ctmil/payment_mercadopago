@@ -457,6 +457,7 @@ class TxMercadoPago(models.Model):
                                     _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
                                     _logger.info(_order_uri)
                                     merchant_order = MPago.get(_order_uri)
+                                    _logger.info(merchant_order)
                                     data = {}
                                     data['collection_status'] = result['status']
                                     data['external_reference'] = result['external_reference']
