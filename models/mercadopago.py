@@ -430,8 +430,10 @@ class AcquirerMercadopago(models.Model):
 
             MPagoToken = False
             if MPago:
-                if acquirer.environment=="prod":
+                if acquirer.state=="enabled":
                     MPago.sandbox_mode(False)
+                elif acquirer.state=="disabled":
+                    return {}
                 else:
                     MPago.sandbox_mode(True)
 
