@@ -464,8 +464,8 @@ class TxMercadoPago(models.Model):
                                     data['payment_type'] = result['payment_type_id']
                                     data['id'] = result['id']
                                     data['topic'] = 'payment'
-                                    if (merchant_order and 'preference_id' in merchant_order ):
-                                        data['pref_id'] = merchant_order['preference_id']
+                                    if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
+                                        data['pref_id'] = merchant_order['response']['preference_id']
                                     _logger.info(data)
                                     tx._mercadopago_form_validate(dict(data))
 
