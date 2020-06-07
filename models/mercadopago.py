@@ -566,17 +566,18 @@ class TxMercadoPago(models.Model):
         merchant_order_id = data.get('merchant_order_id')
 
         if (payment_type and external_reference):
-            data = {
+            data.update({
                 'acquirer_reference': external_reference,
                 'mercadopago_txn_type': payment_type
-            }
+            })
 
         if (merchant_order_id):
             data["mercadopago_txn_merchant_order_id"] = merchant_order_id
 
         if (pref_id):
             data['mercadopago_txn_preference_id'] = str(pref_id)
-
+        _logger.info("Final data:")
+        _logger.info(data)
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             if (self.state not in ['done']):
