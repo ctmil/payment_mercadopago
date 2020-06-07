@@ -412,7 +412,7 @@ class TxMercadoPago(models.Model):
             _logger.info(tx)
             _logger.info(tx.acquirer_reference)
             acquirer = tx.acquirer_id
-            if (tx.acquirer_reference and acquirer and tx.state not in ["done","cancel"]):
+            if (tx.acquirer_reference and acquirer and tx.state not in ["donex","cancel"]):
                 MPago = False
                 MPagoPrefId = False
 
