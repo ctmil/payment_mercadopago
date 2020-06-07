@@ -181,7 +181,7 @@ class AcquirerMercadopago(models.Model):
 
         reference = None
         sorder_s = None
-        if (topi and op_id):
+        if (topic and op_id):
             pass;
         elif ("reference" in tx_values):
             reference = tx_values["reference"]
@@ -215,7 +215,7 @@ class AcquirerMercadopago(models.Model):
 
         if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
             MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
-            _logger.info( MPago )
+            #_logger.info( MPago )
         else:
             error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
             _logger.error(error_msg)
@@ -237,7 +237,7 @@ class AcquirerMercadopago(models.Model):
 
             if (MPagoToken):
                 self.mercadopago_api_access_token = MPagoToken
-            _logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
+            #_logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
 
             #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
             #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
@@ -399,14 +399,126 @@ class AcquirerMercadopago(models.Model):
             request.close()
         return res
 
+    @api.model
+    def mercadopago_get_reference(self, payment_id=None ):
+        reference = None
+        if (not payment_id):
+            return reference
+        mps = self.search([('provider','=','mercadopago'),('mercadopago_client_id','!=',False),('mercadopago_secret_key','!=',False)])
+        for mp in mps:
+            data = mp._mercadopago_get_data(payment_id=payment_id)
+            if (data and ('external_reference' in data) ):
+                return data['external_reference']
+        return reference
+
+
+    def _mercadopago_get_data(self, payment_id=None, reference=None ):
+        data = None
+        for acquirer in self:
+            MPago = False
+            MPagoPrefId = False
+
+            if acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key:
+                MPago = mercadopago.MP( acquirer.mercadopago_client_id, acquirer.mercadopago_secret_key )
+                #_logger.info( MPago )
+            else:
+                error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_client_id and acquirer.mercadopago_secret_key'
+                _logger.error(error_msg)
+                #raise ValidationError(error_msg)
+
+            jsondump = ""
+
+            MPagoToken = False
+            if MPago:
+                if acquirer.environment=="prod":
+                    MPago.sandbox_mode(False)
+                else:
+                    MPago.sandbox_mode(True)
+
+                MPagoToken = MPago.get_access_token()
+
+                if (MPagoToken):
+                    acquirer.mercadopago_api_access_token = MPagoToken
+                #_logger.info("MPagoToken:"+str(acquirer.mercadopago_api_access_token))
+                #payment_result = MPago.search_payment( _filters )
+                search_uri = ''
+                if (reference):
+                    search_uri = '/v1/payments/search?'+'external_reference='+reference+'&access_token='+acquirer.mercadopago_api_access_token
+                else:
+                    search_uri = '/v1/payments/'+str(payment_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                #_logger.info(search_uri)
+                payment_result = MPago.get( search_uri )
+                #_logger.info(payment_result)
+                if (payment_result and 'response' in payment_result):
+                    _results = []
+                    if ('results' in payment_result['response']):
+                        _results = payment_result['response']['results']
+                    else:
+                        _results.append( payment_result['response'] )
+                    #_logger.info(_results)
+                    for result in _results:
+                        _logger.info(result)
+                        _status = result['status']
+                        if ('order' in result):
+                            _order_id = result['order']['id']
+                            _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                            #_logger.info(_order_uri)
+                            merchant_order = MPago.get(_order_uri)
+                            #_logger.info(merchant_order)
+                            data = {}
+                            data['collection_status'] = result['status']
+                            data['external_reference'] = result['external_reference']
+                            data['payment_type'] = result['payment_type_id']
+                            data['id'] = result['id']
+                            data['topic'] = 'payment'
+                            data['merchant_order_id'] = _order_id
+                            if ('response' in merchant_order and 'preference_id' in merchant_order['response'] ):
+                                data['pref_id'] = merchant_order['response']['preference_id']
+                            #_logger.info(data)
+                            return data
+        return data
+
 
 class TxMercadoPago(models.Model):
     _inherit = 'payment.transaction'
 
     mercadopago_txn_id = fields.Char('Transaction ID', index=True)
     mercadopago_txn_type = fields.Char('Transaction type', index=True)
-    mercadopago_txn_preference_id = field.Char(string='Mercadopago Preference id', index=True)
+    mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
+    mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
 
+    def _get_provider(self):
+        for tx in self:
+            tx.mercadopago_txn_provider = tx.acquirer_id.provider
+
+    mercadopago_txn_provider = fields.Char(string="Provider",compute=_get_provider )
+
+    def _get_pref_id_from_order( self, order_id ):
+
+        return ''
+
+    def action_mercadopago_check_status( self ):
+        data = {}
+        _logger.info("action_mercadopago_check_status")
+        for tx in self:
+            acquirer_reference = tx.reference
+            if (tx.acquirer_reference):
+                acquirer_reference = tx.acquirer_reference
+            else:
+                tx.acquirer_reference = tx.reference
+
+            try:
+                data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
+                #_logger.info(data)
+                if (data):
+                    tx._mercadopago_form_validate(dict(data))
+            except Exception as e:
+                error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
+                error_msg+= '\n'+'or Transaction was cancelled.'
+                _logger.error(e, exc_info=True)
+                raise ValidationError(e)
+
+        return data
 
     # --------------------------------------------------
     # FORM RELATED METHODS
@@ -469,35 +581,65 @@ class TxMercadoPago(models.Model):
 #charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
     #called by Trans.form_feedback(...) > %s_form_validate(...)
     def _mercadopago_form_validate(self, data):
-        status = data.get('collection_status')
-        topic = data.get('topic')
-        payment_id = data.get('id')
-        pref_id = data.get('pref_id')
+        #IPN style
+        f_data = data
+        topic = f_data.get('topic')
+        payment_id = f_data.get('id')
+        #DPN style
+        external_reference = f_data.get('external_reference')
 
-        data = {
-            'acquirer_reference': data.get('external_reference'),
-            'mercadopago_txn_type': data.get('payment_type')
-        }
+        if (topic in ["payment"] and payment_id and self.acquirer_id):
+            #IPN based on payment id, preferred...
+            f_data.update( self.acquirer_id._mercadopago_get_data(payment_id=payment_id) )
+            external_reference = f_data.get('external_reference')
+        elif (external_reference):
+            #DPN based on payment id, preferred...
+            f_data.update( self.acquirer_id._mercadopago_get_data(reference=external_reference) )
+            payment_id = f_data.get('id')
 
-        if (topic in ["payment"] and payment_id):
-			data['mercadopago_txn_id'] = str(payment_id)
+        #REST OF THE FIELDS:
+        status = f_data.get('collection_status')
+        payment_type = f_data.get('payment_type')
+        pref_id = f_data.get('pref_id')
+        merchant_order_id = f_data.get('merchant_order_id')
+
+        _logger.info("_mercadopago_form_validate: external_reference: " +str(external_reference))
+
+        #BUILD data to write into Transaction fields
+        data = {}
+        if (payment_type and external_reference):
+            data.update({
+                'acquirer_reference': external_reference,
+                'mercadopago_txn_type': payment_type
+            })
+
+        if (merchant_order_id):
+            data["mercadopago_txn_merchant_order_id"] = merchant_order_id
 
         if (pref_id):
             data['mercadopago_txn_preference_id'] = str(pref_id)
 
+        if (payment_id):
+            data['mercadopago_txn_id'] = str(payment_id)
+
+        #_logger.info("Final data:")
+        #_logger.info(data)
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
-            data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
+            if (self.state not in ['done']):
+                data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
             self._set_transaction_done()
             return self.write(data)
         elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
-            data.update(state='pending', state_message=data.get('pending_reason', ''))
+            if (self.state not in ['pending']):
+                data.update(state='pending', state_message=data.get('pending_reason', ''))
             self._set_transaction_pending()
             return self.write(data)
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (self.reference))
-            data.update(state='cancel', state_message=data.get('cancel_reason', ''))
+            if (self.state not in ['cancel']):
+                data.update(state='cancel', state_message=data.get('cancel_reason', ''))
             self._set_transaction_cancel()
             return self.write(data)
         else:
