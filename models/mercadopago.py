@@ -553,7 +553,6 @@ class TxMercadoPago(models.Model):
         #IPN style
         topic = data.get('topic')
         payment_id = data.get('id')
-
         if (topic in ["payment"] and payment_id):
             data['mercadopago_txn_id'] = str(payment_id)
             data.update(self._mercadopago_get_data())
@@ -565,6 +564,10 @@ class TxMercadoPago(models.Model):
         pref_id = data.get('pref_id')
         merchant_order_id = data.get('merchant_order_id')
 
+        _logger.info("_mercadopago_form_validate")
+        _logger.info(data)
+
+        data = {}
         if (payment_type and external_reference):
             data.update({
                 'acquirer_reference': external_reference,
