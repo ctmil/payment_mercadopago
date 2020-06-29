@@ -36,15 +36,11 @@ class AcquirerMercadopago(models.Model):
         """ MercadoPago URLS """
         if environment == 'prod':
             return {
-                #https://www.mercadopago.com/mla/checkout/pay?pref_id=153438434-6eb25e49-1bb8-4553-95b2-36033be216ad
-                #'mercadopago_form_url': 'https://www.paypal.com/cgi-bin/webscr',
                 'mercadopago_form_url': 'https://www.mercadopago.com/mla/checkout/pay',
                 'mercadopago_rest_url': 'https://api.mercadolibre.com/oauth/token',
             }
         else:
             return {
-                #'mercadopago_form_url': 'https://www.sandbox.paypal.com/cgi-bin/webscr',
-                #https://api.mercadolibre.com/oauth/token
                 'mercadopago_form_url': 'https://sandbox.mercadopago.com/mla/checkout/pay',
                 'mercadopago_rest_url': 'https://api.sandbox.mercadolibre.com/oauth/token',
             }
@@ -321,11 +317,8 @@ class AcquirerMercadopago(models.Model):
             if (len(shipments)):
                 preference["shipments"] = shipments
 
-            #print "preference:", preference
-
             preferenceResult = MPago.create_preference(preference)
 
-            #print "preferenceResult: ", preferenceResult
             if 'response' in preferenceResult:
                 if 'error' in preferenceResult['response']:
                     error_msg = 'Returning response is:'
@@ -521,7 +514,7 @@ class TxMercadoPago(models.Model):
     def _mercadopago_form_get_tx_from_data(self, data, context=None):
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
-        if not reference or not collection_id:
+        if (not reference and not collection_id):
             error_msg = 'MercadoPago: received data with missing reference (%s) or collection_id (%s)' % (reference,collection_id)
             _logger.error(error_msg)
             raise ValidationError(error_msg)
@@ -584,11 +577,15 @@ class TxMercadoPago(models.Model):
 
         if (topic in ["payment"] and payment_id and self.acquirer_id):
             #IPN based on payment id, preferred...
-            f_data.update( self.acquirer_id._mercadopago_get_data(payment_id=payment_id) )
+            res = self.acquirer_id._mercadopago_get_data(payment_id=payment_id)
+            if (res):
+                f_data.update( res )
             external_reference = f_data.get('external_reference')
         elif (external_reference):
             #DPN based on payment id, preferred...
-            f_data.update( self.acquirer_id._mercadopago_get_data(reference=external_reference) )
+            res = self.acquirer_id._mercadopago_get_data(reference=external_reference)
+            if (res):
+                f_data.update( res )
             payment_id = f_data.get('id')
 
         #REST OF THE FIELDS:

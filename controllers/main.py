@@ -50,14 +50,12 @@ class MercadoPagoController(http.Controller):
 
         Once data is validated, process it. """
         res = False
-        #new_post = dict(post, cmd='_notify-validate')
 
 #       topic = payment
 #       id = identificador-de-la-operación
         topic = post.get('topic')
         op_id = post.get('id')
 
-        #cr, uid, context = request.cr, request.uid, request.context
         reference = post.get('external_reference')
 
         if (not reference and (topic and str(topic) in ["payment"] and op_id) ):
@@ -68,13 +66,15 @@ class MercadoPagoController(http.Controller):
         tx = None
         if reference:
             tx = request.env['payment.transaction'].search( [('reference', '=', reference)])
-            _logger.info('mercadopago_validate_data() > payment.transaction founded: %s' % tx)
+            _logger.info('mercadopago_validate_data() > payment.transaction founded: %s' % tx.reference)
 
         _logger.info('MercadoPago: validating data')
         #print "new_post:", new_post
-        _logger.info('MercadoPago: %s' % post)
+        _logger.info('MercadoPago Post: %s' % post)
 
         if (tx):
+            post.update( { 'external_reference': reference } )
+            _logger.info('MercadoPago Post Updated: %s' % post)
             res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
         return res
@@ -94,7 +94,7 @@ class MercadoPagoController(http.Controller):
             self.mercadopago_validate_data(**post)
         return ''
 
-    @http.route('/payment/mercadopago/dpn', type='http', auth="none")
+    @http.route('/payment/mercadopago/dpn/', type='http', auth="none")
     def mercadopago_dpn(self, **post):
         """ MercadoPago DPN """
         _logger.info('Beginning MercadoPago DPN form_feedback with post data %s', pprint.pformat(post))  # debug
