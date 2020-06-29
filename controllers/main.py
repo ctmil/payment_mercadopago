@@ -94,7 +94,7 @@ class MercadoPagoController(http.Controller):
             self.mercadopago_validate_data(**post)
         return ''
 
-    @http.route('/payment/mercadopago/dpn/', type='http', auth="none")
+    @http.route('/payment/mercadopago/dpn', type='http', auth="none")
     def mercadopago_dpn(self, **post):
         """ MercadoPago DPN """
         _logger.info('Beginning MercadoPago DPN form_feedback with post data %s', pprint.pformat(post))  # debug
