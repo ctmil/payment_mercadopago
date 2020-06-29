@@ -66,7 +66,7 @@ class MercadoPagoController(http.Controller):
         tx = None
         if reference:
             tx = request.env['payment.transaction'].search( [('reference', '=', reference)])
-            _logger.info('mercadopago_validate_data() > payment.transaction: %s' % tx)
+            _logger.info('mercadopago_validate_data() > payment.transaction founded: %s' % tx.reference)
 
         _logger.info('MercadoPago: validating data')
         #print "new_post:", new_post
@@ -75,7 +75,7 @@ class MercadoPagoController(http.Controller):
         if (tx):
             post.update( { 'external_reference': reference } )
             _logger.info('MercadoPago Post Updated: %s' % post)
-            res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago_ar')
+            res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
 
         return res
 

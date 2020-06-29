@@ -585,7 +585,7 @@ class TxMercadoPago(models.Model):
 
         if (topic in ["payment"] and payment_id and self.acquirer_id):
             #IPN based on payment id, preferred...
-            res = self.acquirer_id._mercadopago_ar_get_data(payment_id=payment_id)
+            res = self.acquirer_id._mercadopago_get_data(payment_id=payment_id)
             if (res):
                 f_data.update( res )
             external_reference = f_data.get('external_reference')
