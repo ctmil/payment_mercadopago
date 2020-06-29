@@ -10,7 +10,6 @@
                 <xpath expr='//group[@name="acquirer"]' position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'mercadopago')]}">
                         <group>
-                                <button type="action" name="mercadopago_auth"/>
                                 <field name="mercadopago_client_id"/>
                                 <field name="mercadopago_secret_key"/>
 
@@ -37,10 +36,21 @@
             <field name="model">payment.transaction</field>
             <field name="inherit_id" ref="payment.transaction_form"/>
             <field name="arch" type="xml">
+              <xpath expr="//div[@name='button_box']" position="inside">
+                  <button type="object"
+                    attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"
+                    name="action_mercadopago_check_status"
+                    class="oe_stat_button">
+                    <img src="/payment_mercadopago/static/src/img/mercadopago_logo_64.png" width="32" alt="logo mp"/>
+                    <span>Actualizar estado</span>
+                  </button>
+              </xpath>
               <xpath expr="//field[@name='acquirer_reference']" position="after">
-                          <field name="mercadopago_txn_id"/>
-                          <field name="mercadopago_txn_type"/>
-                          <field name="mercadopago_txn_preference_id/>
+                      <field name="mercadopago_txn_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"/>
+                      <field name="mercadopago_txn_type" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"/>
+                      <field name="mercadopago_txn_preference_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"/>
+                      <field name="mercadopago_txn_merchant_order_id" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"/>
+                      <field name="mercadopago_txn_provider" attrs="{'invisible':[('mercadopago_txn_provider', '!=', 'mercadopago_ar')] }"/>
               </xpath>
             </field>
         </record>
