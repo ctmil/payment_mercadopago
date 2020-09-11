@@ -227,7 +227,7 @@ class AcquirerMercadopago(models.Model):
             else:
                 MPago.sandbox_mode(True)
 
-            MPagoToken = MPago.get_access_token()
+            MPagoToken = MPago.identificationtype.get_access_token()
 
             if (MPagoToken):
                 self.mercadopago_api_access_token = MPagoToken
@@ -317,7 +317,7 @@ class AcquirerMercadopago(models.Model):
             if (len(shipments)):
                 preference["shipments"] = shipments
 
-            preferenceResult = MPago.create_preference(preference)
+            preferenceResult = MPago.preference.create(preference)
 
             if 'response' in preferenceResult:
                 if 'error' in preferenceResult['response']:
@@ -339,15 +339,15 @@ class AcquirerMercadopago(models.Model):
                 linkpay = preferenceResult['response']['init_point']
             else:
                 linkpay = preferenceResult['response']['sandbox_init_point']
-
             jsondump = json.dumps( preferenceResult, indent=2 )
 
         if (not reference):
-            payment_info = MPago.get_payment(op_id)
+            payment_info = MPago.payment.get(op_id)
 
         if MPagoPrefId:
             mercadopago_tx_values.update({
                 'pref_id': MPagoPrefId,
+                'link_pay': linkpay
             })
 
         _logger.info(mercadopago_tx_values)
@@ -422,7 +422,7 @@ class AcquirerMercadopago(models.Model):
                 else:
                     MPago.sandbox_mode(True)
 
-                MPagoToken = MPago.get_access_token()
+                MPagoToken = MPago.identificationtype.get_access_token()
 
                 if (MPagoToken):
                     acquirer.mercadopago_api_access_token = MPagoToken
@@ -434,7 +434,7 @@ class AcquirerMercadopago(models.Model):
                 else:
                     search_uri = '/v1/payments/'+str(payment_id)+'?access_token='+acquirer.mercadopago_api_access_token
                 #_logger.info(search_uri)
-                payment_result = MPago.get( search_uri )
+                payment_result = MPago.genericcall.get( search_uri )
                 #_logger.info(payment_result)
                 if (payment_result and 'response' in payment_result):
                     _results = []
@@ -448,9 +448,9 @@ class AcquirerMercadopago(models.Model):
                         _status = result['status']
                         if ('order' in result):
                             _order_id = result['order']['id']
-                            _order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
+                            #_order_uri = '/merchant_orders/'+str(_order_id)+'?access_token='+acquirer.mercadopago_api_access_token
                             #_logger.info(_order_uri)
-                            merchant_order = MPago.get(_order_uri)
+                            merchant_order = MPago.merchantorder.get(_order_id)
                             #_logger.info(merchant_order)
                             data = {}
                             data['collection_status'] = result['status']
