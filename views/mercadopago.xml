@@ -4,8 +4,14 @@
 
         <template id="mercadopago_acquirer_button">
             <div>
-                <input type="hidden" name="data_set" t-att-data-action-url="tx_url" data-remove-me=""/>
-                <input type="hidden" name="pref_id" t-att-value="pref_id"/>
+              <!--VERSION 1.1.20-->
+              <t t-if="link_pay">
+                <input type="hidden" name="data_set" t-att-data-action-url="link_pay"/>
+              </t>
+              <t t-else="">
+                <input type="hidden" name="data_set" t-att-data-action-url="tx_url"/>
+              </t>
+              <input type="hidden" name="pref_id" t-att-value="pref_id"/>
             </div>
         </template>
 

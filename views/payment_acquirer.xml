@@ -10,7 +10,6 @@
                 <xpath expr='//group[@name="acquirer"]' position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'mercadopago')]}">
                         <group>
-                                <button type="action" name="mercadopago_auth"/>
                                 <field name="mercadopago_client_id"/>
                                 <field name="mercadopago_secret_key"/>
 
