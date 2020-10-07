@@ -4,7 +4,7 @@
     'name': 'MercadoPago Payment Acquirer',
     'category': 'Accounting',
     'summary': 'Payment Acquirer: MercadoPago Implementation for Odoo version 13.0',
-    'version': '13.1.21.0',
+    'version': '13.1.27.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
     'website': 'https://www.moldeointeractive.com',
