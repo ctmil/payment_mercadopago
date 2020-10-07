@@ -310,7 +310,7 @@ class AcquirerMercadopago(models.Model):
 	            "notification_url": '%s' % urljoin( base_url, MercadoPagoController._notify_url),
 	            "external_reference": tx_values["reference"],
 	            "expires": True,
-	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal()) ),
+	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())-datetime.timedelta(days=1) ),
 	            "expiration_date_to": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())+datetime.timedelta(days=31) )
                 }
 
@@ -570,8 +570,8 @@ class TxMercadoPago(models.Model):
     def _mercadopago_form_validate(self, data):
         #IPN style
         f_data = data
-        topic = f_data.get('topic')
-        payment_id = f_data.get('id')
+        topic = f_data.get('topic') or f_data.get('type')
+        payment_id = f_data.get('id') or f_data.get('data.id')
         #DPN style
         external_reference = f_data.get('external_reference')
 
@@ -619,26 +619,26 @@ class TxMercadoPago(models.Model):
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             if (self.state not in ['done']):
                 data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
-            self._set_transaction_done()
-            return self.write(data)
+            self.sudo()._set_transaction_done()
+            return self.sudo().write(data)
         elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
             if (self.state not in ['pending']):
                 data.update(state='pending', state_message=data.get('pending_reason', ''))
-            self._set_transaction_pending()
-            return self.write(data)
+            self.sudo()._set_transaction_pending()
+            return self.sudo().write(data)
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (self.reference))
             if (self.state not in ['cancel']):
                 data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            self._set_transaction_cancel()
-            return self.write(data)
+            self.sudo()._set_transaction_cancel()
+            return self.sudo().write(data)
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (self.reference, status)
             _logger.info(error)
             data.update(state='error', state_message=error)
-            self._set_transaction_cancel()
-            return self.write(data)
+            self.sudo()._set_transaction_cancel()
+            return self.sudo().write(data)
 
     # --------------------------------------------------
     # SERVER2SERVER RELATED METHODS

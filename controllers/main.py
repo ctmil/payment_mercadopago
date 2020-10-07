@@ -65,7 +65,7 @@ class MercadoPagoController(http.Controller):
 
         tx = None
         if reference:
-            tx = request.env['payment.transaction'].search( [('reference', '=', reference)])
+            tx = request.env['payment.transaction'].sudo().search( [('reference', '=', reference)])
             _logger.info('mercadopago_validate_data() > payment.transaction founded: %s' % tx.reference)
 
         _logger.info('MercadoPago: validating data')
@@ -87,8 +87,7 @@ class MercadoPagoController(http.Controller):
         _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
         querys = parse.urlsplit(request.httprequest.url).query
         params = dict(parse.parse_qsl(querys))
-        _logger.info(params)
-        if (params and 'topic' in params and 'id' in params):
+        if (params and ('topic' in params or 'type' in params) and ('id' in params or 'data.id' in params)):
             self.mercadopago_validate_data( **params )
         else:
             self.mercadopago_validate_data(**post)
