@@ -1,2 +1,2 @@
 # payment_mercadopago
-This implementation is for Odoo 13.0
+This implementation is for Odoo 14.0
