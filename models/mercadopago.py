@@ -65,7 +65,9 @@ class AcquirerMercadopago(models.Model):
         #res['tokenize'].append('mercadopago')
         return res
 
-    provider = fields.Selection(selection_add=[('mercadopago', 'MercadoPago')])
+    provider = fields.Selection(selection_add=[
+            ('mercadopago', 'MercadoPago')
+        ], ondelete={'mercadopago': 'set default'})
     #mercadopago_client_id = fields.Char('MercadoPago Client Id',required_if_provider='mercadopago')
     mercadopago_client_id = fields.Char('MercadoPago Client Id', size=256)
     #mercadopago_secret_key = fields.Char('MercadoPago Secret Key',required_if_provider='mercadopago')

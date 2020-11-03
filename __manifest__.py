@@ -2,9 +2,10 @@
 
 {
     'name': 'MercadoPago Payment Acquirer',
-    'category': 'Accounting',
+    'category': 'Accounting/Payment Acquirers',
+    'sequence': 365,
     'summary': 'Payment Acquirer: MercadoPago Implementation for Odoo version 13.0',
-    'version': '13.1.27.0',
+    'version': '14.1.27.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
     'website': 'https://www.moldeointeractive.com',
@@ -21,6 +22,7 @@
                 'static/description/main2_screenshot.png',
                 'static/description/create_application_mp_sreenshot.png','static/description/credentials_mercadopago_screenshot.png'],
     'installable': True,
+    'application': True,
     'license': 'GPL-3',
     'post_init_hook': 'create_missing_journal_for_acquirers',
 }
