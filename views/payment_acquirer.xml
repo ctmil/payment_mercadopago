@@ -9,7 +9,7 @@
                 <group attrs="{'invisible': [('provider', '!=', 'mercadopago')]}">
                     <group>
                         <field name="mercadopago_api_access_token"
-                               attrs="{'required': [('provider', '!=', 'mercadopago')]}"/>
+                               attrs="{'required': [('provider', '=', 'mercadopago')]}"/>
                     </group>
                 </group>
             </xpath>

@@ -62,92 +62,71 @@ class AcquirerMercadopago(models.Model):
     @api.multi
     def mercadopago_form_generate_values(self, values):
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        acquirer = self
         tx_values = dict(values)
-        topic = values.get('topic')
-        op_id = values.get('id')
-
-        reference = None
-        if (topic and op_id):
-            pass;
-        elif ("reference" in tx_values):
-            reference = tx_values["reference"]
-
-        shipments = ''
+        transaction = self.env["payment.transaction"].search([("reference", "=", tx_values["reference"])])
         amount = tx_values["amount"]
-        melcatid = False
-        MPago = False
         MPagoPrefId = False
-
-        if not acquirer.mercadopago_api_access_token:
-            error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_api_access_token'
+        if not self.mercadopago_api_access_token:
+            error_msg = 'YOU MUST COMPLETE mercadopago_api_access_token'
             _logger.error(error_msg)
             raise ValidationError(error_msg)
-        MPago = mercadopago.SDK(acquirer.mercadopago_api_access_token)
-        jsondump = ""
+        MPago = mercadopago.SDK(self.mercadopago_api_access_token)
         mercadopago_tx_values = dict(tx_values)
-        if (reference):
-            preference = {
-                "items": [
-                    {
-                        "title": "Orden Ecommerce " + tx_values["reference"],
-                        # "picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
-                        "quantity": 1,
-                        "currency_id": tx_values['currency'] and tx_values['currency'].name or '',
-                        "unit_price": amount,
-                        # "categoryid": "Categoría",
-                    }
-                ],
-                "payer": {
-                    "name": tx_values.get("partner_name"),
-                    "email": tx_values.get("partner_email"),
-                    "phone": {
-                        "number": tx_values.get("partner_phone")
-                    },
-                    "address": {
-                        "street_name": tx_values.get("partner_address"),
-                        "street_number": "",
-                        "zip_code": tx_values.get("partner_zip"),
-                    }
+        preference = {
+            "items": [
+                {
+                    "title": "Orden Ecommerce " + tx_values["reference"],
+                    "quantity": 1,
+                    "currency_id": tx_values['currency'] and tx_values['currency'].name or '',
+                    "unit_price": amount,
+                }
+            ],
+            "payer": {
+                "name": tx_values.get("partner_name"),
+                "email": tx_values.get("partner_email"),
+                "phone": {
+                    "number": tx_values.get("partner_phone")
                 },
-                "back_urls": {
-                    "success": '%s' % urljoin(base_url, MercadoPagoController._return_url),
-                    "failure": '%s' % urljoin(base_url, MercadoPagoController._cancel_url),
-                    "pending": '%s' % urljoin(base_url, MercadoPagoController._return_url)
-                },
-                "auto_return": "approved",
-                "notification_url": '%s' % urljoin(base_url, MercadoPagoController._notify_url),
-                "external_reference": tx_values["reference"],
-                "expires": True,
-                "expiration_date_from": self.mercadopago_dateformat(
-                    datetime.datetime.now(tzlocal()) - datetime.timedelta(days=1)),
-                "expiration_date_to": self.mercadopago_dateformat(
-                    datetime.datetime.now(tzlocal()) + datetime.timedelta(days=31))
-            }
-            if (len(shipments)):
-                preference["shipments"] = shipments
-            preferenceResult = MPago.preference.create(preference)
-            if 'response' in preferenceResult:
-                if 'error' in preferenceResult['response']:
-                    error_msg = 'Returning response is:'
-                    error_msg += json.dumps(preferenceResult, indent=2)
-                    _logger.error(error_msg)
-                    raise ValidationError(error_msg)
-                if 'id' in preferenceResult['response']:
-                    MPagoPrefId = preferenceResult['response']['id']
-            else:
+                "address": {
+                    "street_name": tx_values.get("partner_address"),
+                    "street_number": "",
+                    "zip_code": tx_values.get("partner_zip"),
+                }
+            },
+            "back_urls": {
+                "success": '%s' % urljoin(base_url, MercadoPagoController._return_url),
+                "failure": '%s' % urljoin(base_url, MercadoPagoController._cancel_url),
+                "pending": '%s' % urljoin(base_url, MercadoPagoController._return_url)
+            },
+            "auto_return": "approved",
+            "notification_url": '%s' % urljoin(base_url, MercadoPagoController._notify_url),
+            "external_reference": tx_values["reference"],
+            "expires": True,
+            "expiration_date_from": self.mercadopago_dateformat(
+                datetime.datetime.now(tzlocal()) - datetime.timedelta(days=1)),
+            "expiration_date_to": self.mercadopago_dateformat(
+                datetime.datetime.now(tzlocal()) + datetime.timedelta(days=31))
+        }
+        preferenceResult = MPago.preference().create(preference)
+        if 'response' in preferenceResult:
+            if 'error' in preferenceResult['response']:
                 error_msg = 'Returning response is:'
                 error_msg += json.dumps(preferenceResult, indent=2)
                 _logger.error(error_msg)
                 raise ValidationError(error_msg)
-            if acquirer.environment == "prod":
-                linkpay = preferenceResult['response']['init_point']
-            else:
-                linkpay = preferenceResult['response']['sandbox_init_point']
-            jsondump = json.dumps(preferenceResult, indent=2)
-        if (not reference):
-            payment_info = MPago.payment.get(op_id)
+            if 'id' in preferenceResult['response']:
+                MPagoPrefId = preferenceResult['response']['id']
+        else:
+            error_msg = 'Returning response is:'
+            error_msg += json.dumps(preferenceResult, indent=2)
+            _logger.error(error_msg)
+            raise ValidationError(error_msg)
+        if self.environment == "prod":
+            linkpay = preferenceResult['response']['init_point']
+        else:
+            linkpay = preferenceResult['response']['sandbox_init_point']
         if MPagoPrefId:
+            transaction.write({"acquirer_reference": MPagoPrefId})
             mercadopago_tx_values.update({
                 'pref_id': MPagoPrefId,
                 'link_pay': linkpay
@@ -159,65 +138,57 @@ class AcquirerMercadopago(models.Model):
         return ""
 
     @api.model
-    def mercadopago_get_reference(self, payment_id=None):
+    def mercadopago_get_reference(self, payment_id=None, topic="payment"):
         reference = None
-        if (not payment_id):
+        if not payment_id:
             return reference
         mps = self.search([('provider', '=', 'mercadopago'), ('mercadopago_api_access_token', '!=', False)])
         for mp in mps:
-            data = mp._mercadopago_get_data(payment_id=payment_id)
-            if (data and ('external_reference' in data)):
+            data = mp._mercadopago_get_data(payment_id=payment_id, topic=topic)
+            if data and 'external_reference' in data:
                 return data['external_reference']
         return reference
 
-    def _mercadopago_get_data(self, payment_id=None, reference=None):
+    @api.multi
+    def _mercadopago_get_data(self, payment_id=None, reference=None, topic="payment"):
+        self.ensure_one()
+        assert topic in ["payment", "merchant_order"], "Topic debe estar entre payment, merchant_order"
         data = None
-        for acquirer in self:
-            MPago = False
-            MPagoPrefId = False
-
-            if acquirer.mercadopago_api_access_token:
-                error_msg = 'YOU MUST COMPLETE acquirer.mercadopago_api_access_token'
-                _logger.error(error_msg)
-                return False
-                # raise ValidationError(error_msg)
-            MPago = mercadopago.MP(acquirer.mercadopago_api_access_token)
-            jsondump = ""
-
-            MPagoToken = False
-            if MPago:
-                search_uri = ''
-                if (reference):
-                    search_uri = '/v1/payments/search?' + 'external_reference=' + reference + '&access_token=' + acquirer.mercadopago_api_access_token
-                else:
-                    search_uri = '/v1/payments/' + str(
-                        payment_id) + '?access_token=' + acquirer.mercadopago_api_access_token
-                # _logger.info(search_uri)
-                payment_result = MPago.genericcall.get(search_uri)
-                # _logger.info(payment_result)
-                if (payment_result and 'response' in payment_result):
-                    _results = []
-                    if ('results' in payment_result['response']):
-                        _results = payment_result['response']['results']
-                    else:
-                        _results.append(payment_result['response'])
-                    # _logger.info(_results)
-                    for result in _results:
-                        _logger.info(result)
-                        _status = result['status']
-                        if ('order' in result):
-                            _order_id = result['order']['id']
-                            merchant_order = MPago.merchantorder.get(_order_id)
-                            data = {}
-                            data['collection_status'] = result['status']
-                            data['external_reference'] = result['external_reference']
-                            data['payment_type'] = result['payment_type_id']
-                            data['id'] = result['id']
-                            data['topic'] = 'payment'
-                            data['merchant_order_id'] = _order_id
-                            if ('response' in merchant_order and 'preference_id' in merchant_order['response']):
-                                data['pref_id'] = merchant_order['response']['preference_id']
-                            return data
+        MPago = mercadopago.SDK(self.mercadopago_api_access_token)
+        payment_result = {}
+        if reference:
+            if topic == "payment":
+                payment_result = MPago.payment().search({"external_reference": reference})
+            else:
+                payment_result = MPago.merchant_order().search({"external_reference": reference})
+        else:
+            if topic == "payment":
+                payment_result = MPago.payment().get(payment_id)
+            else:
+                payment_result = MPago.merchant_order().get(payment_id)
+        if payment_result and 'response' in payment_result:
+            _results = []
+            if 'results' in payment_result['response']:
+                _results = payment_result['response']['results']
+            else:
+                _results.append(payment_result['response'])
+            for result in _results:
+                _logger.info(result)
+                _status = result['status']
+                if 'order' in result:
+                    _order_id = result['order']['id']
+                    merchant_order = MPago.merchant_order().get(_order_id)
+                    data = {
+                        'id': result['id'],
+                        'topic': 'payment',
+                        'collection_status': result['status'],
+                        'external_reference': result['external_reference'],
+                        'payment_type': result['payment_type_id'],
+                        'merchant_order_id': _order_id
+                    }
+                    if 'response' in merchant_order and 'preference_id' in merchant_order['response']:
+                        data['pref_id'] = merchant_order['response']['preference_id']
+                    return data
         return data
 
 

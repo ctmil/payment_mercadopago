@@ -7,8 +7,6 @@ except ImportError:
 import logging
 import pprint
 
-from urllib.request import urlopen
-
 try:
     #python2
     import urlparse as parse
@@ -29,15 +27,6 @@ class MercadoPagoController(http.Controller):
     _return_url = '/payment/mercadopago/dpn/'
     _cancel_url = '/payment/mercadopago/cancel/'
 
-    def _get_return_url(self, **post):
-        """ Extract the return URL from the data coming from MercadoPago. """
-#        return_url = post.pop('return_url', '')
-#        if not return_url:
-#            custom = json.loads(post.pop('custom', False) or '{}')
-#            return_url = custom.get('return_url', '/')
-        return_url = '/payment/process'
-        return return_url
-
     def mercadopago_validate_data(self, **post):
         """ MercadoPago IPN: three steps validation to ensure data correctness
 
@@ -57,14 +46,13 @@ class MercadoPagoController(http.Controller):
 
         reference = post.get('external_reference')
 
-        if (not reference and (topic and str(topic) in ["payment"] and op_id) ):
-            _logger.info('MercadoPago topic:'+str(topic))
-            _logger.info('MercadoPago payment id to search:'+str(op_id))
-            reference = request.env["payment.acquirer"].sudo().mercadopago_get_reference(payment_id=op_id)
+        if not reference and (topic and str(topic) in ["payment", "merchant_order"] and op_id):
+            _logger.info('MercadoPago Topic: %s. payment ID: %s', str(topic), str(op_id))
+            reference = request.env["payment.acquirer"].sudo().mercadopago_get_reference(payment_id=op_id, topic=topic)
 
         tx = None
         if reference:
-            tx = request.env['payment.transaction'].sudo().search( [('reference', '=', reference)])
+            tx = request.env['payment.transaction'].sudo().search([('reference', '=', reference)])
             _logger.info('mercadopago_validate_data() > payment.transaction founded: %s' % tx.reference)
 
         _logger.info('MercadoPago: validating data')
@@ -72,10 +60,9 @@ class MercadoPagoController(http.Controller):
         _logger.info('MercadoPago Post: %s' % post)
 
         if (tx):
-            post.update( { 'external_reference': reference } )
+            post.update({'external_reference': reference})
             _logger.info('MercadoPago Post Updated: %s' % post)
-            res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
-
+            res = request.env['payment.transaction'].sudo().form_feedback(post, 'mercadopago')
         return res
 
     @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
@@ -86,27 +73,25 @@ class MercadoPagoController(http.Controller):
         _logger.info('Beginning MercadoPago IPN form_feedback with post data %s', pprint.pformat(post))  # debug
         querys = parse.urlsplit(request.httprequest.url).query
         params = dict(parse.parse_qsl(querys))
-        if (params and ('topic' in params or 'type' in params) and ('id' in params or 'data.id' in params)):
-            self.mercadopago_validate_data( **params )
+        if params and ('topic' in params or 'type' in params) and ('id' in params or 'data.id' in params):
+            self.mercadopago_validate_data(**params)
         else:
             self.mercadopago_validate_data(**post)
-        return ''
+        return werkzeug.wrappers.Response(status=200)
 
     @http.route('/payment/mercadopago/dpn', type='http', auth="none")
     def mercadopago_dpn(self, **post):
         """ MercadoPago DPN """
         _logger.info('Beginning MercadoPago DPN form_feedback with post data %s', pprint.pformat(post))  # debug
-        return_url = self._get_return_url(**post)
         self.mercadopago_validate_data(**post)
-        return werkzeug.utils.redirect(return_url)
+        return werkzeug.utils.redirect('/payment/process')
 
     @http.route('/payment/mercadopago/cancel', type='http', auth="none")
     def mercadopago_cancel(self, **post):
         """ When the user cancels its MercadoPago payment: GET on this route """
         _logger.info('Beginning MercadoPago cancel with post data %s', pprint.pformat(post))  # debug
-        return_url = self._get_return_url(**post)
         status = post.get('collection_status')
-        if status=='null':
+        if status == 'null':
             post['collection_status'] = 'cancelled'
         self.mercadopago_validate_data(**post)
-        return werkzeug.utils.redirect(return_url)
+        return werkzeug.utils.redirect('/payment/process')
