@@ -10,10 +10,6 @@
             <field name="environment">test</field>
             <field name="pre_msg"><![CDATA[
 <p>You will be redirected to the MercadoPago website after cliking on the payment button.</p>]]></field>
-            <field name="mercadopago_email_account">dummy</field>
-            <field name="mercadopago_seller_account">dummy</field>
-            <field name="mercadopago_api_username">dummy</field>
-            <field name="mercadopago_api_password">dummy</field>
         </record>
     </data>
 </odoo>

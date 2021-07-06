@@ -12,7 +12,6 @@
     'data': [
         'views/mercadopago.xml',
         'views/payment_acquirer.xml',
-        #'views/res_config_view.xml',
         'data/mercadopago.xml',
     ],
     'images': ['src/img/mercadopago_icon.png','src/img/mercadopago_logo.png',

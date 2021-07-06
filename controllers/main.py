@@ -23,7 +23,6 @@ from odoo.http import request
 
 _logger = logging.getLogger(__name__)
 
-from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
 class MercadoPagoController(http.Controller):
     _notify_url = '/payment/mercadopago/ipn/'
