@@ -172,7 +172,10 @@ class AcquirerMercadopago(models.Model):
                 _results = payment_result['response']['results']
             else:
                 _results.append(payment_result['response'])
-            for result in _results:
+            payment_approved = [line for line in _results if line.get("status") == "approved"]
+            if not payment_approved:
+                payment_approved = _results
+            for result in payment_approved:
                 _logger.info(result)
                 _status = result['status']
                 if 'order' in result:
@@ -309,9 +312,18 @@ class TxMercadoPago(models.Model):
         # _logger.info(data)
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
+            # pasar a borrador para poder procesarla nuevamente, en estado cancel ya no se puede
+            # esto cuando por alguna razon la transaccion no se valido correctamente
+            # y luego se consulta el estado manualmente
+            force_confirm_transaction = False
+            if self.state == "cancel":
+                self.write({"state": "draft"})
+                force_confirm_transaction = True
             if (self.state not in ['done']):
                 data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
             self.sudo()._set_transaction_done()
+            if force_confirm_transaction:
+                self._post_process_after_done()
             return self.sudo().write(data)
         elif status in ['pending', 'in_process', 'in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
