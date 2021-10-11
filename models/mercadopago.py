@@ -489,7 +489,7 @@ class TxMercadoPago(models.Model):
         for tx in self:
             tx.mercadopago_txn_provider = tx.acquirer_id.provider
 
-    mercadopago_txn_provider = fields.Char(string="Provider",compute=_get_provider )
+    mercadopago_txn_provider = fields.Char(string="Transaction Provider",compute=_get_provider )
 
     def _get_pref_id_from_order( self, order_id ):
 
