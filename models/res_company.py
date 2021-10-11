@@ -32,7 +32,7 @@ class ResCompany(models.Model):
             Acquirer.write(mercadopago_ids, {'mercadopago_email_account': value}, context=context)
         return True
 
-    mercadopago_account = fields.Char( copmute=_get_mercadopago_account,
+    mercadopago_account = fields.Char( compute=_get_mercadopago_account,
             fnct_inv=_set_mercadopago_account,
             nodrop=True,
             string='MercadoPago Account',

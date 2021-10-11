@@ -5,7 +5,7 @@
     'category': 'Accounting/Payment Acquirers',
     'sequence': 365,
     'summary': 'Payment Acquirer: MercadoPago Implementation',
-    'version': '14.1.27.0',
+    'version': '14.1.28.0',
     'description': """MercadoPago Payment Acquirer""",
     'author': 'Moldeo Interactive',
     'website': 'https://www.moldeointeractive.com',
