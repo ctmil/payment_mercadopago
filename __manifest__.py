@@ -24,5 +24,5 @@
     'installable': True,
     'application': True,
     'license': 'GPL-3',
-    'post_init_hook': 'create_missing_journal_for_acquirers',
+    #'post_init_hook': 'create_missing_journal_for_acquirers',
 }
