@@ -50,16 +50,17 @@ class AcquirerMercadopago(models.Model):
         providers.append(['mercadopago', 'MercadoPago'])
         return providers
 
-    @api.model
-    def _get_compatible_acquirers(self, *args, currency_id=None, **kwargs):
-        """ Override of payment to unlist MercadoPago acquirers when the currency is not supported. """
-        acquirers = super()._get_compatible_acquirers(*args, currency_id=currency_id, **kwargs)
+    #@api.model
+    #def _get_compatible_acquirers(self, *args, currency_id=None, **kwargs):
+    #    """ Override of payment to unlist MercadoPago acquirers when the currency is not supported. """
+    #    acquirers = super()._get_compatible_acquirers(*args, currency_id=currency_id, **kwargs)
 
-        currency = self.env['res.currency'].browse(currency_id).exists()
-        if currency and currency.name not in SUPPORTED_CURRENCIES:
-            acquirers = acquirers.filtered(lambda a: a.provider != 'mercadopago')
+    #    currency = self.env['res.currency'].browse(currency_id).exists()
+    #    if currency and currency.name not in SUPPORTED_CURRENCIES:
+    #        acquirers = acquirers.filtered(lambda a: a.provider != 'mercadopago')
 
-        return acquirers
+    #    return acquirers
+
 
     def _get_feature_support(self):
         """Get advanced feature support by provider.
