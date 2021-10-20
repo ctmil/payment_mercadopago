@@ -15,5 +15,11 @@
             </div>
         </template>
 
+        <template id="redirect_form">
+            <form t-att-action="link_pay" method="post">              
+              <input type="hidden" name="pref_id" t-att-value="pref_id"/>
+            </form>
+        </template>
+
     </data>
 </odoo>
