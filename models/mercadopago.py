@@ -29,6 +29,16 @@ dateformatutc="%z"
 
 from odoo.addons.payment_mercadopago.mercadopago import mercadopago
 
+
+class AccountPaymentMethod(models.Model):
+    _inherit = 'account.payment.method'
+
+    @api.model
+    def _get_payment_method_information(self):
+        res = super()._get_payment_method_information()
+        res['mercadopago'] = {'mode': 'unique', 'domain': [('type', '=', 'bank')]}
+        return res
+
 class AcquirerMercadopago(models.Model):
     _inherit = 'payment.acquirer'
 
