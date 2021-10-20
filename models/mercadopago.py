@@ -187,7 +187,7 @@ class AcquirerMercadopago(models.Model):
         # 'partner_id': 10,
         # 'provider': 'mercadopago',
         # 'reference': 'S00001'
-        # } 
+        # }
 
         tx_values = dict(values)
         _logger.info(tx_values)
@@ -206,7 +206,7 @@ class AcquirerMercadopago(models.Model):
             sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
 
         shipments = ''
-        amount = tx_values["amount"]
+        amount = ("amount" in tx_values and tx_values["amount"]) or self.amount
         melcatid = False
         if (sorder_s):
             if (len(sorder_s.order_line)>0):
@@ -272,32 +272,32 @@ class AcquirerMercadopago(models.Model):
             preference = {
                 "items": [
                 {
-                    "title": "Orden Ecommerce "+ tx_values["reference"],
+                    "title": "Orden Ecommerce "+ reference,
                     #"picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
                     "quantity": 1,
-                    "currency_id":  tx_values['currency'] and tx_values['currency'].name or '',
+                    "currency_id":  ('currency' in tx_values and tx_values['currency'] and tx_values['currency'].name) or (self.currency_id and self.currency_id.name)  or '',
                     "unit_price": amount,
                     #"categoryid": "Categoría",
                 }
                 ]
                 ,
                 "payer": {
-		            "name": tx_values.get("partner_name"),
+		            "name": self.partner_name or tx_values.get("partner_name"),
 		            #"surname": tx_values.get("partner_first_name"),
-		            "email": tx_values.get("partner_email"),
+		            "email": self.partner_email or tx_values.get("partner_email"),
 #		            "date_created": "2015-01-29T11:51:49.570-04:00",
 		            "phone": {
 #			            "area_code": "+5411",
-			            "number": tx_values.get("partner_phone")
+			            "number": self.partner_phone or tx_values.get("partner_phone") or ''
 		            },
 #		            "identification": {
 #			            "type": "DNI",
 #			            "number": "12345678"
 #		            },
 		            "address": {
-			            "street_name": tx_values.get("partner_address"),
+			            "street_name": self.partner_address or tx_values.get("partner_address") or '',
 			            "street_number": "",
-			            "zip_code": tx_values.get("partner_zip"),
+			            "zip_code": self.partner_zip or tx_values.get("partner_zip") or '',
 		            }
 	            },
 	            "back_urls": {
@@ -332,7 +332,7 @@ class AcquirerMercadopago(models.Model):
 #		            }
 #	            },
 	            "notification_url": '%s' % urljoin( base_url, MercadoPagoController._notify_url),
-	            "external_reference": tx_values["reference"],
+	            "external_reference": reference,
 	            "expires": True,
 	            "expiration_date_from": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())-datetime.timedelta(days=1) ),
 	            "expiration_date_to": self.mercadopago_dateformat( datetime.datetime.now(tzlocal())+datetime.timedelta(days=31) )
