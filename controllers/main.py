@@ -79,7 +79,7 @@ class MercadoPagoController(http.Controller):
 
         return res
 
-    @http.route('/payment/mercadopago/ipn/', type='json', auth='none')
+    @http.route('/payment/mercadopago/ipn/', type='json', auth='public')
     def mercadopago_ipn(self, **post):
         """ MercadoPago IPN. """
         # recibimo algo como http://www.yoursite.com/notifications?topic=payment&id=identificador-de-la-operación
@@ -94,7 +94,7 @@ class MercadoPagoController(http.Controller):
             self.mercadopago_validate_data(**post)
         return ''
 
-    @http.route('/payment/mercadopago/dpn', type='http', auth="none")
+    @http.route('/payment/mercadopago/dpn', type='http', auth="public")
     def mercadopago_dpn(self, **post):
         """ MercadoPago DPN """
         _logger.info('Beginning MercadoPago DPN form_feedback with post data %s', pprint.pformat(post))  # debug
@@ -102,7 +102,7 @@ class MercadoPagoController(http.Controller):
         self.mercadopago_validate_data(**post)
         return werkzeug.utils.redirect(return_url)
 
-    @http.route('/payment/mercadopago/cancel', type='http', auth="none")
+    @http.route('/payment/mercadopago/cancel', type='http', auth="public")
     def mercadopago_cancel(self, **post):
         """ When the user cancels its MercadoPago payment: GET on this route """
         _logger.info('Beginning MercadoPago cancel with post data %s', pprint.pformat(post))  # debug
