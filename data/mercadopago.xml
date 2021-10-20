@@ -16,5 +16,12 @@
             <field name="mercadopago_api_username">dummy</field>
             <field name="mercadopago_api_password">dummy</field>
         </record>
+
+
+        <record id="payment_method_mercadopago" model="account.payment.method">
+            <field name="name">MercadoPago</field>
+            <field name="code">mercadopago</field>
+            <field name="payment_type">inbound</field>
+        </record>
     </data>
 </odoo>
