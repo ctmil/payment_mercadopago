@@ -9,12 +9,6 @@
             <field name="company_id" ref="base.main_company"/>
             <!--field name="view_template_id" ref="mercadopago_acquirer_button"/-->
             <!--field name="environment">test</field-->
-
-            <field name="support_authorization">False</field>
-            <field name="support_fees_computation"></field>
-            <field name="support_refund"></field>
-            <field name="support_tokenization">False</field>
-
             <field name="pre_msg"><![CDATA[
 <p>You will be redirected to the MercadoPago website after cliking on the payment button.</p>]]></field>
             <field name="mercadopago_email_account">dummy</field>
