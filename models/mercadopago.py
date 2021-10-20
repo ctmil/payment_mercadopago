@@ -176,7 +176,7 @@ class AcquirerMercadopago(models.Model):
         return path
 
 
-    def mercadopago_form_generate_values(self, values):
+    def mercadopago_form_generate_values(self, values, tx):
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         acquirer = self
@@ -207,7 +207,7 @@ class AcquirerMercadopago(models.Model):
             sorder_s = saleorder_obj.search([ ('name','=',tx_values["reference"]) ] )
 
         shipments = ''
-        amount = ("amount" in tx_values and tx_values["amount"]) or self.amount
+        amount = ("amount" in tx_values and tx_values["amount"]) or tx.amount
         melcatid = False
         if (sorder_s):
             if (len(sorder_s.order_line)>0):
@@ -276,29 +276,29 @@ class AcquirerMercadopago(models.Model):
                     "title": "Orden Ecommerce "+ reference,
                     #"picture_url": "https://www.mercadopago.com/org-img/MP3/home/logomp3.gif",
                     "quantity": 1,
-                    "currency_id":  ('currency' in tx_values and tx_values['currency'] and tx_values['currency'].name) or (self.currency_id and self.currency_id.name)  or '',
+                    "currency_id":  ('currency' in tx_values and tx_values['currency'] and tx_values['currency'].name) or (tx.currency_id and tx.currency_id.name)  or '',
                     "unit_price": amount,
                     #"categoryid": "Categoría",
                 }
                 ]
                 ,
                 "payer": {
-		            "name": self.partner_name or tx_values.get("partner_name"),
+		            "name": tx.partner_name or tx_values.get("partner_name"),
 		            #"surname": tx_values.get("partner_first_name"),
-		            "email": self.partner_email or tx_values.get("partner_email"),
+		            "email": tx.partner_email or tx_values.get("partner_email"),
 #		            "date_created": "2015-01-29T11:51:49.570-04:00",
 		            "phone": {
 #			            "area_code": "+5411",
-			            "number": self.partner_phone or tx_values.get("partner_phone") or ''
+			            "number": tx.partner_phone or tx_values.get("partner_phone") or ''
 		            },
 #		            "identification": {
 #			            "type": "DNI",
 #			            "number": "12345678"
 #		            },
 		            "address": {
-			            "street_name": self.partner_address or tx_values.get("partner_address") or '',
+			            "street_name": tx.partner_address or tx_values.get("partner_address") or '',
 			            "street_number": "",
-			            "zip_code": self.partner_zip or tx_values.get("partner_zip") or '',
+			            "zip_code": tx.partner_zip or tx_values.get("partner_zip") or '',
 		            }
 	            },
 	            "back_urls": {
