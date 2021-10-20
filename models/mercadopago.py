@@ -519,7 +519,7 @@ class TxMercadoPago(models.Model):
         if self.provider != 'mercadopago':
             return res
 
-        return self.acquirer_id.mercadopago_form_generate_values(processing_values)
+        return self.acquirer_id.mercadopago_form_generate_values(processing_values,tx=self)
 
         #base_url = self.acquirer_id.get_base_url()
         #partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
