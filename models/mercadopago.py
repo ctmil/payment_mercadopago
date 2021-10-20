@@ -672,6 +672,7 @@ class TxMercadoPago(models.Model):
 
         #_logger.info("Final data:")
         #_logger.info(data)
+        _logger.info("self.env.user:"+str(self.env.user))
         if status in ['approved', 'processed']:
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             if (self.state not in ['done']):
