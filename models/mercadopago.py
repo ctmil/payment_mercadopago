@@ -50,6 +50,17 @@ class AcquirerMercadopago(models.Model):
         providers.append(['mercadopago', 'MercadoPago'])
         return providers
 
+    @api.model
+    def _get_compatible_acquirers(self, *args, currency_id=None, **kwargs):
+        """ Override of payment to unlist MercadoPago acquirers when the currency is not supported. """
+        acquirers = super()._get_compatible_acquirers(*args, currency_id=currency_id, **kwargs)
+
+        currency = self.env['res.currency'].browse(currency_id).exists()
+        if currency and currency.name not in SUPPORTED_CURRENCIES:
+            acquirers = acquirers.filtered(lambda a: a.provider != 'mercadopago')
+
+        return acquirers
+
     def _get_feature_support(self):
         """Get advanced feature support by provider.
 
@@ -168,6 +179,15 @@ class AcquirerMercadopago(models.Model):
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         acquirer = self
+
+        #{
+        #  'acquirer_id': 15,
+        # 'amount': 20.0,
+        # 'currency_id': 19,
+        # 'partner_id': 10,
+        # 'provider': 'mercadopago',
+        # 'reference': 'S00001'
+        # } 
 
         tx_values = dict(values)
         _logger.info(tx_values)
@@ -484,6 +504,46 @@ class TxMercadoPago(models.Model):
     mercadopago_txn_type = fields.Char('Transaction type', index=True)
     mercadopago_txn_preference_id = fields.Char(string='Mercadopago Preference id', index=True)
     mercadopago_txn_merchant_order_id = fields.Char(string='Mercadopago Merchant Order id', index=True)
+
+    def _get_specific_rendering_values(self, processing_values):
+        """ Override of payment to return MercadoPago-specific rendering values.
+
+        Note: self.ensure_one() from `_get_processing_values`
+
+        :param dict processing_values: The generic and specific processing values of the transaction
+        :return: The dict of acquirer-specific processing values
+        :rtype: dict
+        """
+        res = super()._get_specific_rendering_values(processing_values)
+        if self.provider != 'mercadopago':
+            return res
+
+        return self.acquirer_id.mercadopago_form_generate_values(processing_values)
+
+        #base_url = self.acquirer_id.get_base_url()
+        #partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
+        #notify_url = self.acquirer_id.paypal_use_ipn \
+        #             and urls.url_join(base_url, PaypalController._notify_url)
+        #return {
+        #    'address1': self.partner_address,
+        #    'amount': self.amount,
+        #    'business': self.acquirer_id.paypal_email_account,
+        #    'city': self.partner_city,
+        #    'country': self.partner_country_id.code,
+        #    'currency_code': self.currency_id.name,
+        #    'email': self.partner_email,
+        #    'first_name': partner_first_name,
+        #    'handling': self.fees,
+        #    'item_name': f"{self.company_id.name}: {self.reference}",
+        #    'item_number': self.reference,
+        #    'last_name': partner_last_name,
+        #    'lc': self.partner_lang,
+        #    'notify_url': notify_url,
+        #    'return_url': urls.url_join(base_url, PaypalController._return_url),
+        #    'state': self.partner_state_id.name,
+        #    'zip_code': self.partner_zip,
+        #    'api_url': self.acquirer_id._paypal_get_api_url(),
+        #}
 
     def _get_provider(self):
         for tx in self:
