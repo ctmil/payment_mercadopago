@@ -5,7 +5,7 @@
             <field name="name">MercadoPago</field>
             <field name="image_128" type="base64" file="payment_mercadopago/static/src/img/mercadopago_icon.png"/>
             <field name="provider">mercadopago</field>
-            <field name="redirect_form_view_id" ref="payment_mercadopago.redirect_form"/>
+            <field name="redirect_form_view_id" ref="redirect_form_mercadopago"/>
             <field name="company_id" ref="base.main_company"/>
             <!--field name="view_template_id" ref="mercadopago_acquirer_button"/-->
             <!--field name="environment">test</field-->

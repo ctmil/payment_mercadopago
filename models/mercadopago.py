@@ -523,31 +523,6 @@ class TxMercadoPago(models.Model):
 
         return self.acquirer_id.mercadopago_form_generate_values(processing_values,tx=self)
 
-        #base_url = self.acquirer_id.get_base_url()
-        #partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
-        #notify_url = self.acquirer_id.paypal_use_ipn \
-        #             and urls.url_join(base_url, PaypalController._notify_url)
-        #return {
-        #    'address1': self.partner_address,
-        #    'amount': self.amount,
-        #    'business': self.acquirer_id.paypal_email_account,
-        #    'city': self.partner_city,
-        #    'country': self.partner_country_id.code,
-        #    'currency_code': self.currency_id.name,
-        #    'email': self.partner_email,
-        #    'first_name': partner_first_name,
-        #    'handling': self.fees,
-        #    'item_name': f"{self.company_id.name}: {self.reference}",
-        #    'item_number': self.reference,
-        #    'last_name': partner_last_name,
-        #    'lc': self.partner_lang,
-        #    'notify_url': notify_url,
-        #    'return_url': urls.url_join(base_url, PaypalController._return_url),
-        #    'state': self.partner_state_id.name,
-        #    'zip_code': self.partner_zip,
-        #    'api_url': self.acquirer_id._paypal_get_api_url(),
-        #}
-
     def _get_provider(self):
         for tx in self:
             tx.mercadopago_txn_provider = tx.acquirer_id.provider
@@ -585,7 +560,12 @@ class TxMercadoPago(models.Model):
     # FORM RELATED METHODS
     # --------------------------------------------------
     @api.model
-    def _mercadopago_form_get_tx_from_data(self, data, context=None):
+    def _get_tx_from_feedback_data(self, provider, data, context=None):
+
+        tx = super()._get_tx_from_feedback_data(provider, data)
+        if provider != 'mercadopago':
+            return tx
+
 #        reference, txn_id = data.get('external_reference'), data.get('txn_id')
         reference, collection_id = data.get('external_reference'), data.get('collection_id')
         if (not reference and not collection_id):
@@ -603,7 +583,7 @@ class TxMercadoPago(models.Model):
                 error_msg += '; multiple order found'
             _logger.error(error_msg)
             raise ValidationError(error_msg)
-        return tx_ids
+        return tx_ids or tx
 
     def _mercadopago_form_get_invalid_parameters(self, data):
         invalid_parameters = []
@@ -641,7 +621,10 @@ class TxMercadoPago(models.Model):
 #in_mediation 	Se inició una disputa para el pago.
 #charged_back (estado terminal) 	Se realizó un contracargo en la tarjeta de crédito.
     #called by Trans.form_feedback(...) > %s_form_validate(...)
-    def _mercadopago_form_validate(self, data):
+    def _process_feedback_data(self, data):
+        super()._process_feedback_data(data)
+        if self.provider != 'mercadopago':
+            return
         #IPN style
         f_data = data
         topic = f_data.get('topic') or f_data.get('type')
@@ -668,7 +651,7 @@ class TxMercadoPago(models.Model):
         pref_id = f_data.get('pref_id')
         merchant_order_id = f_data.get('merchant_order_id')
 
-        _logger.info("_mercadopago_form_validate: external_reference: " +str(external_reference))
+        _logger.info("_process_feedback_data: external_reference: " +str(external_reference))
 
         #BUILD data to write into Transaction fields
         data = {}
@@ -693,26 +676,26 @@ class TxMercadoPago(models.Model):
             _logger.info('Validated MercadoPago payment for tx %s: set as done' % (self.reference))
             if (self.state not in ['done']):
                 data.update(state='done', date=data.get('payment_date', fields.datetime.now()))
-            self.sudo()._set_transaction_done()
-            return self.sudo().write(data)
+            self.sudo()._set_done()
+            self.sudo().write(data)
         elif status in ['pending', 'in_process','in_mediation']:
             _logger.info('Received notification for MercadoPago payment %s: set as pending' % (self.reference))
             if (self.state not in ['pending']):
                 data.update(state='pending', state_message=data.get('pending_reason', ''))
-            self.sudo()._set_transaction_pending()
-            return self.sudo().write(data)
+            self.sudo()._set_pending(state_message=data.get('pending_reason', ''))
+            self.sudo().write(data)
         elif status in ['cancelled','refunded','charged_back','rejected']:
             _logger.info('Received notification for MercadoPago payment %s: set as cancelled' % (self.reference))
             if (self.state not in ['cancel']):
                 data.update(state='cancel', state_message=data.get('cancel_reason', ''))
-            self.sudo()._set_transaction_cancel()
-            return self.sudo().write(data)
+            self.sudo()._set_canceled()
+            self.sudo().write(data)
         else:
             error = 'Received unrecognized status for MercadoPago payment %s: %s, set as error' % (self.reference, status)
             _logger.info(error)
             data.update(state='error', state_message=error)
-            self.sudo()._set_transaction_cancel()
-            return self.sudo().write(data)
+            self.sudo()._set_canceled()
+            self.sudo().write(data)
 
     # --------------------------------------------------
     # SERVER2SERVER RELATED METHODS
