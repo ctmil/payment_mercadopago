@@ -560,7 +560,7 @@ class TxMercadoPago(models.Model):
     # FORM RELATED METHODS
     # --------------------------------------------------
     @api.model
-    def _get_tx_from_feedback_data(self, provider, data, context=None):
+    def _get_tx_from_feedback_data(self, provider, data):
 
         tx = super()._get_tx_from_feedback_data(provider, data)
         if provider != 'mercadopago':

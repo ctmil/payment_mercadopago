@@ -75,7 +75,7 @@ class MercadoPagoController(http.Controller):
         if (tx):
             post.update( { 'external_reference': reference } )
             _logger.info('MercadoPago Post Updated: %s' % post)
-            res = request.env['payment.transaction'].sudo().form_feedback( post, 'mercadopago')
+            res = request.env['payment.transaction'].sudo()._handle_feedback_data( 'mercadopago', post)
 
         return res
 
