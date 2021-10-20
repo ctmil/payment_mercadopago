@@ -256,7 +256,7 @@ class AcquirerMercadopago(models.Model):
 
             if (MPagoToken):
                 self.mercadopago_api_access_token = MPagoToken
-            #_logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
+            _logger.info("MPagoToken:"+str(self.mercadopago_api_access_token))
 
             #mpago = https://api.mercadolibre.com/categories/MLA371926/shipping
             #cost: https://api.mercadolibre.com/users/:user_id/shipping_options?category_id=:category_id&dimensions=:dim&zip_code=13565905
