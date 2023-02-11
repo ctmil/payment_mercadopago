@@ -557,7 +557,7 @@ class TxMercadoPago(models.Model):
                 data = tx.acquirer_id._mercadopago_get_data(reference=acquirer_reference)
                 #_logger.info(data)
                 if (data):
-                    tx._mercadopago_form_validate(dict(data))
+                    tx._process_feedback_data(dict(data))
             except Exception as e:
                 error_msg = 'Reference: '+str(acquirer_reference)+' not found,'
                 error_msg+= '\n'+'or Transaction was cancelled.'
